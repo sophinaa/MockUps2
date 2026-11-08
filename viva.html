@@ -1,0 +1,1876 @@
+<title>Viva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: fixed app shell. Compact icon rail left, thin top bar, one focused view at a time.
+   Exam room is a 60/40 split: evidence (code) left, conversation right. Single deliberate dark look. */
+:root{
+  color-scheme: dark;
+  --bg:#121417; --panel:#181b1f; --panel-2:#1e2227; --raised:#252a30; --line:#2a2f36; --line-2:#383f48;
+  --fg:#e8ebef; --fg-2:#b7bfc9; --muted:#8c95a1; --faint:#5f6874;
+  --teal:#45cfb6; --teal-bg:rgba(69,207,182,.11); --teal-line:rgba(69,207,182,.38);
+  --amber:#f1b25e; --amber-bg:rgba(241,178,94,.11); --amber-line:rgba(241,178,94,.42);
+  --red:#f37a76; --red-bg:rgba(243,122,118,.11); --red-line:rgba(243,122,118,.42);
+  --blue:#7ea8ff; --blue-bg:rgba(126,168,255,.11); --blue-line:rgba(126,168,255,.4);
+  --slate:#a9b3c2; --slate-bg:rgba(169,179,194,.09);
+  --add-bg:rgba(120,200,140,.075); --add-fg:#93cf9f; --del-bg:rgba(214,130,150,.075); --del-fg:#d797a6;
+  --hl:#e8ebef; --hl-bg:rgba(232,235,239,.055);
+  --focus:#a9c6ff;
+  --p1:#7fb7ff; --p2:#c3a0ff; --p3:#bad86e; --p4:#ff9fc8;
+  --f-ui:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --f-display:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --r:8px; --r-sm:5px;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+*{box-sizing:border-box}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+.mono{font-family:var(--f-mono);font-size:.92em;letter-spacing:-.01em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:16px;height:16px;flex:none}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+p{margin:0}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:76px minmax(0,1fr);grid-template-rows:52px minmax(0,1fr);height:100%}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;letter-spacing:-.01em;width:44px;flex:none}
+.brand svg{width:22px;height:22px}
+.repo{display:flex;align-items:center;gap:14px;min-width:0;color:var(--fg-2);font-size:13px}
+.repo span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.repo .ic{color:var(--muted)}
+.top .spacer{flex:1}
+.conn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--fg-2);white-space:nowrap}
+.conn .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px var(--teal-bg)}
+.conn.down .dot{background:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
+.conn.retrying .dot{background:var(--amber);box-shadow:0 0 0 3px var(--amber-bg)}
+.conn button{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+.me{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2)}
+.av{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:10.5px;font-weight:700;color:#121417;flex:none}
+.demo-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);border:1px dashed var(--line-2);padding:5px 9px;border-radius:999px}
+.demo-btn:hover{color:var(--fg)}
+.demo-menu{position:absolute;right:16px;top:56px;width:290px;background:var(--raised);border:1px solid var(--line-2);border-radius:var(--r);padding:8px;z-index:40;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.demo-menu h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 8px 8px;font-weight:600}
+.demo-menu button{display:flex;width:100%;text-align:left;gap:10px;align-items:flex-start;padding:8px;border-radius:6px;font-size:13px}
+.demo-menu button:hover{background:var(--panel-2)}
+.demo-menu small{display:block;color:var(--muted);font-size:12px}
+.demo-menu .on{color:var(--amber)}
+
+.side{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:4px;padding:10px 8px}
+.nav{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px 8px;border-radius:var(--r);color:var(--muted);font-size:10.5px;font-weight:500;line-height:1.2;text-align:center}
+.nav .ic{width:19px;height:19px}
+.nav:hover{color:var(--fg);background:var(--panel-2)}
+.nav[aria-current="page"]{color:var(--fg);background:var(--raised)}
+.nav[aria-current="page"]::before{content:"";position:absolute;left:-8px;top:12px;bottom:12px;width:2px;border-radius:2px;background:var(--fg)}
+.nav .badge{position:absolute;top:6px;right:12px;min-width:16px;height:16px;border-radius:8px;background:var(--amber);color:#121417;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.nav .badge.red{background:var(--red)}
+.side .foot{margin-top:auto;font-size:10px;color:var(--faint);text-align:center;line-height:1.3}
+
+main{overflow:auto;min-width:0;position:relative}
+.view{padding:24px 28px 40px;max-width:1440px;margin:0 auto}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.view-head h1{font-size:22px;letter-spacing:-.015em}
+.view-head h1:focus{outline:none}
+.sub{color:var(--muted);margin-top:4px;max-width:62ch}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+
+/* ---------- shared bits ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:7px;font-weight:600;font-size:13.5px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);white-space:nowrap;transition:background .15s,border-color .15s}
+.btn:hover{background:var(--raised);border-color:#4a525d}
+.btn.primary{background:var(--fg);color:#121417;border-color:var(--fg)}
+.btn.primary:hover{background:#fff}
+.btn.ghost{background:none;border-color:transparent;color:var(--fg-2)}
+.btn.ghost:hover{background:var(--panel-2);color:var(--fg)}
+.btn.sm{height:30px;padding:0 10px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line-2);color:var(--fg-2);white-space:nowrap}
+.pill .ic{width:13px;height:13px}
+.pill.teal{color:var(--teal);border-color:var(--teal-line);background:var(--teal-bg)}
+.pill.amber{color:var(--amber);border-color:var(--amber-line);background:var(--amber-bg)}
+.pill.red{color:var(--red);border-color:var(--red-line);background:var(--red-bg)}
+.pill.blue{color:var(--blue);border-color:var(--blue-line);background:var(--blue-bg)}
+.pill.slate{color:var(--slate);border-color:var(--line-2);background:var(--slate-bg)}
+.sim{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);border:1px dashed var(--line-2);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:7px;padding:2px;background:var(--panel)}
+.seg button{height:28px;padding:0 12px;border-radius:5px;font-size:13px;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--raised);color:var(--fg)}
+.search{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--line-2);border-radius:7px;background:var(--panel);min-width:0;width:260px}
+.search .ic{color:var(--muted)}
+.search input{border:0;background:none;outline:none;width:100%;min-width:0;font-size:13px}
+.search:focus-within{border-color:var(--focus)}
+.search kbd{font-family:var(--f-mono);font-size:11px;color:var(--faint);border:1px solid var(--line-2);border-radius:4px;padding:0 5px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.stat{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.stat .k{display:flex;align-items:center;gap:7px;color:var(--fg-2);font-size:12.5px}
+.stat .v{font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:6px;letter-spacing:0}
+.stat .bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.stat .bar i{display:block;height:100%;background:var(--teal);border-radius:2px;transition:width .8s}
+.t-teal{color:var(--teal)} .t-amber{color:var(--amber)} .t-red{color:var(--red)} .t-blue{color:var(--blue)} .t-muted{color:var(--muted)}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.feed li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.feed li:first-child{border-top:0}
+.feed .ic{margin-top:2px}
+.feed time{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.feed li.new{animation:flash 1.6s ease-out}
+@keyframes flash{from{background:var(--raised)}to{background:transparent}}
+.toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;pointer-events:none;width:min(440px,calc(100% - 32px))}
+.toast{background:var(--raised);border:1px solid var(--line-2);padding:10px 14px;border-radius:var(--r);font-size:13px;box-shadow:0 12px 30px rgba(0,0,0,.4);display:flex;gap:9px;align-items:center;animation:rise .25s ease-out}
+@keyframes rise{from{transform:translateY(8px);opacity:0}}
+.skel{background:linear-gradient(90deg,var(--panel-2),var(--raised),var(--panel-2));background-size:200% 100%;animation:shimmer 1.3s linear infinite;border-radius:6px}
+@keyframes shimmer{to{background-position:-200% 0}}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 20px;color:var(--fg-2)}
+.empty .ic{width:28px;height:28px;color:var(--muted)}
+.empty h3{font-size:15px;color:var(--fg)}
+.empty p{max-width:44ch;color:var(--muted)}
+
+/* ---------- overview ---------- */
+.ov-hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.tagline{font-family:var(--f-display);font-size:38px;line-height:1.08;font-weight:400;letter-spacing:-.01em;text-wrap:balance}
+.tagline em{color:var(--amber);font-style:italic}
+.ov-intro{padding:26px 26px 24px;display:flex;flex-direction:column;gap:14px;justify-content:space-between}
+.ov-intro p{color:var(--fg-2);max-width:56ch}
+.paused{padding:20px 22px;display:flex;flex-direction:column;gap:12px;border-color:var(--amber-line)}
+.paused .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.paused h2{font-size:17px}
+.paused .meta{color:var(--muted);font-size:12.5px;display:flex;gap:12px;flex-wrap:wrap}
+.paused blockquote{margin:0;padding:10px 12px;background:var(--panel-2);border-radius:6px;border-left:2px solid var(--amber);font-size:13px;color:var(--fg-2)}
+.ov-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.ov-grid .card{padding:18px 20px}
+.ov-grid h2{font-size:14px;margin-bottom:12px}
+.mod-row{display:grid;grid-template-columns:120px minmax(0,1fr) 54px;gap:12px;align-items:center;padding:8px 0;font-size:13px}
+.mod-row .mono{color:var(--fg-2)}
+.mod-bar{height:10px;border-radius:3px;background:repeating-linear-gradient(135deg,var(--line) 0 4px,var(--panel-2) 4px 8px);overflow:hidden;display:flex}
+.mod-bar i{display:block;height:100%}
+.mod-row .pct{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg-2)}
+
+/* ---------- map ---------- */
+.map-body{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+.stage{position:relative;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 1.5px) 0 0/18px 18px,var(--bg);min-height:480px}
+.modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.module{border:1px solid var(--line);border-radius:var(--r);background:rgba(24,27,31,.85);padding:10px;display:flex;flex-direction:column;gap:8px}
+.module-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:2px 4px 4px;position:relative;z-index:3}
+.module-h b{font-size:13px;font-weight:600}
+.module-h span{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.node{position:relative;z-index:1;display:flex;flex-direction:column;gap:6px;text-align:left;padding:9px 10px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);transition:border-color .2s,opacity .2s,transform .2s}
+.node:hover,.node:focus-visible{z-index:4;border-color:var(--line-2);transform:translateY(-1px)}
+.node.match{z-index:4;border-color:var(--focus)}
+.node.dim{opacity:.35}
+.node[aria-pressed="true"]{z-index:4;border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
+.node .nt{display:flex;align-items:center;gap:6px;min-width:0}
+.node .fn{font-family:var(--f-mono);font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.node .dir{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node .flags{margin-left:auto;display:flex;gap:4px;flex:none}
+.flag{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:4px}
+.flag .ic{width:12px;height:12px}
+.flag.amber{color:var(--amber);background:var(--amber-bg)} .flag.red{color:var(--red);background:var(--red-bg)} .flag.slate{color:var(--slate);background:var(--slate-bg)}
+.syms{display:flex;flex-wrap:wrap;gap:4px}
+.sym{font-family:var(--f-mono);font-size:10.5px;color:var(--fg-2);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 5px;line-height:17px}
+.sym.match{border-color:var(--focus);color:var(--fg)}
+.who{display:flex;gap:4px;align-items:center;min-height:16px}
+.who .d{width:16px;height:16px;border-radius:50%;font-size:8px;font-weight:700;display:grid;place-items:center;color:#121417}
+.who .d.stale{background:transparent!important;border:1.5px dashed currentColor;color:inherit}
+.who .none{font-size:11px;color:var(--muted)}
+.node[data-state="clear"]{border-color:var(--line-2)}
+.node[data-state="clear"]::before{content:"";position:absolute;left:-1px;top:8px;bottom:8px;width:2px;border-radius:2px;background:var(--c,var(--teal))}
+#fog{position:absolute;inset:0;pointer-events:none;z-index:2;border-radius:var(--r)}
+.map-side{display:flex;flex-direction:column;gap:12px;position:sticky;top:0}
+.map-side .card{padding:16px}
+.map-side h2{font-size:13px;margin-bottom:10px}
+.legend{display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--fg-2)}
+.legend .li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center}
+.sw{height:20px;border-radius:4px;border:1px solid var(--line-2)}
+.sw.fog{background:repeating-radial-gradient(circle at 30% 40%,rgba(170,182,198,.55),rgba(170,182,198,.3) 6px,rgba(170,182,198,.5) 11px)}
+.sw.thin{background:linear-gradient(90deg,rgba(170,182,198,.28),rgba(170,182,198,.12))}
+.sw.clear{background:var(--panel-2);border-color:var(--teal-line);box-shadow:inset 2px 0 0 var(--teal)}
+.legend .people{display:flex;flex-wrap:wrap;gap:6px 12px}
+.legend .people span{display:inline-flex;align-items:center;gap:6px}
+.legend .people i{width:10px;height:10px;border-radius:50%}
+.toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--fg-2);cursor:pointer}
+.toggle input{accent-color:var(--teal);width:15px;height:15px}
+.detail{display:flex;flex-direction:column;gap:14px}
+.detail .hd{display:flex;align-items:flex-start;gap:8px}
+.detail .hd h2{font-family:var(--f-mono);font-size:14px;font-weight:600;margin:0;word-break:break-all}
+.detail .hd .btn{margin-left:auto}
+.kv{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 12px;font-size:12.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.people-list{display:flex;flex-direction:column;gap:6px}
+.people-list div{display:flex;align-items:center;gap:8px}
+.callout{padding:10px 12px;border-radius:6px;font-size:12.5px;display:flex;gap:8px;align-items:flex-start}
+.callout.amber{background:var(--amber-bg);color:var(--fg);border:1px solid var(--amber-line)}
+.callout.red{background:var(--red-bg);border:1px solid var(--red-line)}
+.callout.teal{background:var(--teal-bg);border:1px solid var(--teal-line)}
+.callout.slate{background:var(--slate-bg);border:1px solid var(--line-2)}
+.callout .ic{margin-top:2px}
+.callout.amber .ic{color:var(--amber)} .callout.red .ic{color:var(--red)} .callout.teal .ic{color:var(--teal)}
+
+/* ---------- exam ---------- */
+.exam{display:flex;flex-direction:column;height:100%;min-height:0}
+.exam-head{display:flex;align-items:center;gap:14px 20px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+.exam-head h1{font-size:18px;letter-spacing:-.01em}
+.exam-head .meta{display:flex;gap:14px;color:var(--fg-2);font-size:12.5px;flex-wrap:wrap}
+.exam-head .meta span{display:inline-flex;align-items:center;gap:6px}
+.exam-head .meta .ic{color:var(--muted);width:14px;height:14px}
+.exam-head .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mtabs{display:none}
+.split{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.pane{min-height:0;min-width:0;display:flex;flex-direction:column}
+.pane-code{border-right:1px solid var(--line);padding:16px 18px 16px 24px;gap:12px;overflow:hidden}
+.req{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;padding:12px 14px;align-items:start}
+.req q{font-size:15px;font-weight:500;quotes:"\201C" "\201D"}
+.req .by{color:var(--muted);font-size:12px;margin-top:3px}
+.origins{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ob{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-2);padding:3px 8px 3px 4px;border-radius:5px;border:1px solid var(--line)}
+.ob b{font-weight:600;font-variant-numeric:tabular-nums;color:var(--fg)}
+.olet{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--f-mono);flex:none}
+.olet.R{background:var(--blue);color:#121417}
+.olet.I{background:transparent;color:var(--slate);border:1.5px dashed var(--slate)}
+.olet.S{background:var(--amber);color:#121417}
+.codebox{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);overflow:hidden}
+.ftabs{display:flex;align-items:stretch;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.ftab{display:flex;align-items:center;gap:7px;padding:0 14px;height:38px;font-family:var(--f-mono);font-size:12px;color:var(--muted);border-right:1px solid var(--line);white-space:nowrap;position:relative}
+.ftab[aria-selected="true"]{color:var(--fg);background:var(--panel-2)}
+.ftab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--fg)}
+.ftab .cnt{display:inline-flex;gap:3px}
+.ftab .cnt i{width:6px;height:6px;border-radius:2px}
+.code-note{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--fg-2);background:var(--panel-2);flex:none;min-height:34px}
+.code-note .sim{margin-left:auto}
+.code-note button{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+.code{flex:1;min-height:0;overflow:auto;font-family:var(--f-mono);font-size:12.5px;line-height:21px;padding:6px 0 12px;scroll-behavior:smooth}
+.ln{display:grid;grid-template-columns:4px 26px 34px 34px 18px max-content;min-width:100%;align-items:stretch;cursor:default;position:relative}
+.ln>*{white-space:pre}
+.ln .ob2{background:transparent}
+.ln.R .ob2{background:var(--blue)}
+.ln.I .ob2{background:repeating-linear-gradient(180deg,var(--slate) 0 4px,transparent 4px 7px)}
+.ln.S .ob2{background:var(--amber)}
+.ln .ogrp{display:grid;place-items:center}
+.ln .ogrp button{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:4px}
+.ln .n{color:var(--faint);text-align:right;padding-right:8px;font-variant-numeric:tabular-nums;user-select:none}
+.ln .sgn{text-align:center;user-select:none;color:var(--faint)}
+.ln .tx{padding-right:24px;color:var(--fg)}
+.ln.add{background:var(--add-bg)} .ln.add .sgn{color:var(--add-fg)}
+.ln.del{background:var(--del-bg)} .ln.del .sgn{color:var(--del-fg)} .ln.del .tx{color:var(--muted)}
+.ln.grp{cursor:pointer}
+.ln.grp:hover .tx{text-decoration:underline dotted var(--faint);text-underline-offset:4px}
+.ln.sel{background-image:linear-gradient(var(--hl-bg),var(--hl-bg))}
+.ln.sel.S{background-color:rgba(241,178,94,.09)}
+.ln.focus{box-shadow:inset 1px 0 0 var(--hl),inset -1px 0 0 var(--hl);background-image:linear-gradient(rgba(232,235,239,.06),rgba(232,235,239,.06))}
+.ln.focus.fs{box-shadow:inset 1px 0 0 var(--hl),inset -1px 0 0 var(--hl),inset 0 1px 0 var(--hl)}
+.ln.focus.fe{box-shadow:inset 1px 0 0 var(--hl),inset -1px 0 0 var(--hl),inset 0 -1px 0 var(--hl)}
+.ln.focus.fs.fe{box-shadow:inset 0 0 0 1px var(--hl)}
+.ln.focus.pulse{animation:pulse 1.2s ease-out 1}
+@keyframes pulse{0%{background-color:rgba(232,235,239,.16)}100%{background-color:transparent}}
+.tok-k{color:#c5a3ff}.tok-s{color:#a8d5a2}.tok-c{color:var(--faint);font-style:italic}.tok-n{color:#f2b98a}.tok-f{color:#8fc1ff}
+.evidence{flex:none;max-height:42%;overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.evidence .hd{display:flex;align-items:center;gap:10px}
+.evidence h3{font-size:14px}
+.evidence .hd .btn{margin-left:auto}
+.ev-list{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 14px;font-size:12.5px;margin:0}
+.ev-list dt{color:var(--muted)}
+.ev-list dd{margin:0;color:var(--fg-2)}
+.ev-list blockquote{margin:0;color:var(--fg);font-style:italic}
+.signals{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.signals li{display:flex;gap:7px;align-items:flex-start}
+.signals .ic{width:13px;height:13px;margin-top:3px}
+.ev-hint{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;padding:2px 2px 0}
+
+.pane-q{padding:18px 24px 16px;gap:14px;overflow:auto;background:linear-gradient(180deg,var(--panel) 0,var(--bg) 220px)}
+.voice{display:flex;align-items:center;gap:14px}
+.wave{display:flex;align-items:center;gap:3px;height:44px;flex:1;min-width:0}
+.wave i{flex:1;max-width:5px;height:100%;border-radius:3px;background:var(--fg-2);transform:scaleY(.06);transition:background .3s}
+.wave[data-mode="listening"] i{background:var(--blue)}
+.wave[data-mode="thinking"] i,.wave[data-mode="reviewing"] i{background:var(--muted)}
+.wave[data-mode="ready"] i{background:var(--faint)}
+.state{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);font-size:12.5px;font-weight:600;white-space:nowrap}
+.state .sd{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.state[data-s="speaking"] .sd{background:var(--fg);animation:blink 1s infinite}
+.state[data-s="listening"]{border-color:var(--blue-line);color:var(--blue)} .state[data-s="listening"] .sd{background:var(--blue);animation:blink .8s infinite}
+.state[data-s="thinking"] .sd,.state[data-s="reviewing"] .sd{background:var(--muted);animation:blink 1.4s infinite}
+.state[data-s="ready"] .sd{background:var(--teal)}
+@keyframes blink{50%{opacity:.25}}
+.qblock{display:flex;flex-direction:column;gap:10px}
+.qblock .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.question{font-size:22px;line-height:1.35;font-weight:500;letter-spacing:-.012em;text-wrap:pretty;max-width:34ch}
+.question.fu{color:var(--fg)}
+.lines-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--f-mono);color:var(--fg-2);border:1px solid var(--line-2);border-radius:5px;padding:2px 8px}
+.lines-btn:hover{color:var(--fg);border-color:var(--fg-2)}
+.transcript{display:flex;flex-direction:column;gap:12px;padding:14px 0 4px;border-top:1px solid var(--line);flex:1;min-height:90px}
+.tl{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.55}
+.tl .spk{font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--muted);padding-top:2px}
+.tl.you .spk{color:var(--blue)}
+.tl .via{display:block;font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint)}
+.tl.live .txt::after{content:"";display:inline-block;width:6px;height:13px;margin-left:3px;vertical-align:-2px;background:currentColor;opacity:.5;animation:blink .9s infinite}
+.tl.interim .txt{color:var(--fg-2);font-style:italic}
+.tl.sys .txt{color:var(--muted);font-size:12.5px}
+.controls{display:flex;flex-direction:column;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.ctl-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--fg);color:#121417;transition:transform .15s,background .2s;flex:none}
+.mic .ic{width:22px;height:22px}
+.mic:hover{transform:scale(1.04)}
+.mic[aria-pressed="true"]{background:var(--blue);box-shadow:0 0 0 6px var(--blue-bg)}
+.mic:disabled{background:var(--raised);color:var(--muted);transform:none;cursor:not-allowed}
+.mic-label{display:flex;flex-direction:column;font-size:13px;margin-right:auto;min-width:0}
+.mic-label small{color:var(--muted);font-size:12px}
+.iconbtn{width:36px;height:36px;border-radius:7px;display:grid;place-items:center;border:1px solid var(--line-2);color:var(--fg-2)}
+.iconbtn:hover{color:var(--fg);background:var(--panel-2)}
+.iconbtn[aria-pressed="true"]{color:var(--fg);background:var(--raised)}
+.typed{display:flex;flex-direction:column;gap:8px}
+.typed textarea{width:100%;min-height:84px;resize:vertical;background:var(--panel);border:1px solid var(--line-2);border-radius:7px;padding:10px 12px;font-size:14px;line-height:1.5;outline:none}
+.typed textarea:focus{border-color:var(--focus)}
+.typed .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.typed .hint{color:var(--muted);font-size:12px;margin-right:auto}
+.fair{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.fair .ic{width:14px;height:14px;margin-top:2px}
+.skip{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px dashed var(--line-2);border-radius:var(--r);font-size:12.5px;color:var(--muted)}
+.skip.confirm{border-style:solid;border-color:var(--amber-line);background:var(--amber-bg);color:var(--fg);flex-direction:column;align-items:stretch}
+.skip .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.intro{display:flex;flex-direction:column;gap:16px}
+.intro h2{font-size:22px;font-weight:500;letter-spacing:-.012em;line-height:1.3}
+.intro ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;color:var(--fg-2)}
+.intro li{display:flex;gap:9px}
+.intro li .ic{margin-top:3px;color:var(--muted)}
+.intro .row{display:flex;gap:10px;flex-wrap:wrap}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--r);font-size:13px}
+.banner .ic{margin-top:2px}
+.banner.red{background:var(--red-bg);border:1px solid var(--red-line)} .banner.red .ic{color:var(--red)}
+.banner.amber{background:var(--amber-bg);border:1px solid var(--amber-line)} .banner.amber .ic{color:var(--amber)}
+.banner .btn{margin-left:auto}
+.perm{display:flex;flex-direction:column;gap:14px;padding:18px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--panel)}
+.perm h2{font-size:17px}
+.perm p{color:var(--fg-2)}
+
+/* ---------- result ---------- */
+.result{flex:1;overflow:auto;padding:28px 28px 48px}
+.result-in{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.verdict{display:flex;gap:18px;align-items:flex-start}
+.vicon{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;flex:none}
+.vicon .ic{width:26px;height:26px}
+.vicon.teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-line)}
+.vicon.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+.vicon.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+.verdict h2{font-size:28px;letter-spacing:-.02em;font-weight:600}
+.verdict p{color:var(--fg-2);margin-top:6px;max-width:64ch;font-size:15px}
+.verdict .pills{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.axes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.axis{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.axis .eyebrow{display:flex;justify-content:space-between}
+.axis b{font-size:15px;display:flex;gap:8px;align-items:center}
+.axis p{color:var(--fg-2);font-size:13px}
+.res-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.res-grid .card{padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.res-grid h3{font-size:14px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;padding:8px 0;position:relative;font-size:13px;color:var(--fg-2)}
+.steps li::before{counter-increment:s;content:counter(s);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--raised);color:var(--fg-2);font-variant-numeric:tabular-nums}
+.steps li.bad::before{background:var(--red);color:#121417}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:10.5px;top:32px;bottom:-6px;width:1px;background:var(--line-2)}
+.steps b{color:var(--fg);font-weight:600}
+.steps .tag{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.mini-code{font-family:var(--f-mono);font-size:12px;line-height:20px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 0;overflow-x:auto}
+.mini-code div{white-space:pre;padding:0 12px 0 0;display:grid;grid-template-columns:34px max-content}
+.mini-code span:first-child{color:var(--faint);text-align:right;padding-right:10px}
+.mini-code .hot{background:var(--red-bg)}
+.mini-code .ok{background:var(--teal-bg)}
+.quote{margin:0;padding:12px 14px;border-left:2px solid var(--blue);background:var(--panel-2);border-radius:0 6px 6px 0;font-size:13.5px;color:var(--fg)}
+.quote cite{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:6px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions .note{color:var(--muted);font-size:12.5px}
+.agent{display:flex;flex-direction:column;gap:12px;padding:16px 18px;border:1px solid var(--line-2)}
+.agent .hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.agent ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.agent li{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+.agent li.done{color:var(--fg)}
+.agent li .ic{width:15px;height:15px}
+.agent li.done .ic{color:var(--teal)}
+.spin{width:15px;height:15px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--fg);animation:rot .8s linear infinite;flex:none}
+@keyframes rot{to{transform:rotate(360deg)}}
+.msg{font-family:var(--f-mono);font-size:12px;line-height:1.6;white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--fg-2)}
+.cleared{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.cleared li{display:flex;gap:8px;align-items:center;font-size:13px}
+.cleared .ic{color:var(--teal)}
+
+/* ---------- ledger ---------- */
+.ledger-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);font-size:12.5px;color:var(--fg-2);display:inline-flex;align-items:center;gap:6px}
+.chip b{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500}
+.chip[aria-pressed="true"]{background:var(--fg);color:#121417;border-color:var(--fg)}
+.chip[aria-pressed="true"] b{color:#3b4048}
+.ledger-body{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+tr.grp td{background:var(--bg);font-size:12px;color:var(--fg-2);padding:7px 12px;font-weight:600}
+tbody tr.rec{cursor:pointer}
+tbody tr.rec:hover td{background:var(--panel-2)}
+tbody tr.rec[aria-selected="true"] td{background:var(--raised)}
+tbody tr.rec:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+td .pp{display:flex;align-items:center;gap:8px;white-space:nowrap}
+td .sy{font-family:var(--f-mono);font-size:12px}
+td .pa{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+td .ex{color:var(--fg-2);max-width:34ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--fg-2)}
+.chg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12.5px}
+.ledger-detail{padding:18px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0}
+.ledger-detail h2{font-size:16px;font-family:var(--f-mono);font-weight:600}
+.ledger-detail h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:6px}
+.ledger-detail .exp{color:var(--fg);font-size:13.5px}
+
+/* ---------- responsive ---------- */
+@media (max-width:1180px){
+  .map-body{grid-template-columns:minmax(0,1fr) 290px}
+  .ledger-body{grid-template-columns:minmax(0,1fr)}
+  .ledger-detail{position:static}
+  .axes{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:980px){
+  .map-body{grid-template-columns:minmax(0,1fr)}
+  .map-side{position:static}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ov-hero,.ov-grid,.res-grid{grid-template-columns:minmax(0,1fr)}
+  .mtabs{display:flex;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel);gap:8px;align-items:center}
+  .mtabs .seg{flex:1}.mtabs .seg button{flex:1}
+  .split{grid-template-columns:minmax(0,1fr)}
+  .split[data-tab="q"] .pane-code{display:none}
+  .split[data-tab="code"] .pane-q{display:none}
+  .pane-code{border-right:0;padding:12px 16px}
+  .pane-q{padding:16px}
+  .req{grid-template-columns:minmax(0,1fr)}
+  .origins{justify-content:flex-start}
+  .exam-head{padding:12px 16px}
+  .exam-head .right{margin-left:0}
+}
+@media (max-width:720px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr) 60px}
+  .side{grid-row:3;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:4px 8px;justify-content:space-around;padding-bottom:max(4px,env(safe-area-inset-bottom,0px))}
+  .side .foot{display:none}
+  .nav{flex:1;padding:6px 2px}
+  .nav[aria-current="page"]::before{left:20%;right:20%;top:-5px;bottom:auto;width:auto;height:2px}
+  .repo .br,.me .nm,.conn .lbl{display:none}
+  .view{padding:18px 16px 32px}
+  .search{width:100%}
+  .map-tools{width:100%}
+  .result{padding:20px 16px 40px}
+  .verdict{flex-direction:column}
+  .question{font-size:19px}
+  .ev-list{grid-template-columns:minmax(0,1fr)}
+  .mod-row{grid-template-columns:90px minmax(0,1fr) 44px}
+  .tagline{font-size:30px}
+}
+@media (max-width:420px){ .stats{grid-template-columns:minmax(0,1fr)} .demo-btn .lbl{display:none} }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand" aria-label="Viva">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke="#e8ebef" stroke-width="1.6"/><path d="M6.5 9.5h6M5.5 13h8" stroke="#8c95a1" stroke-width="1.6" stroke-linecap="round"/><path d="m11.5 15 2.3 2.3 4.4-5.6" stroke="#45cfb6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Viva</span>
+    </div>
+    <div class="repo">
+      <span class="mono" title="Repository"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/></svg>ledgerline/payments-api</span>
+      <span class="mono br" title="Branch"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9c0 5-6 4-12 8"/></svg>feat/webhook-retries</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="conn" id="conn" role="status" aria-live="polite"></div>
+    <button class="demo-btn" id="demoBtn" aria-haspopup="true" aria-expanded="false" aria-controls="demoMenu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="lbl">Demo states</span></button>
+    <div class="me"><span class="av" style="background:var(--p1)">SO</span><span class="nm">Sophina</span></div>
+    <div class="demo-menu" id="demoMenu" role="menu" hidden></div>
+  </header>
+  <nav class="side" aria-label="Main">
+    <a class="nav" href="#overview" data-v="overview"></a>
+    <a class="nav" href="#map" data-v="map"></a>
+    <a class="nav" href="#exam" data-v="exam"></a>
+    <a class="nav" href="#ledger" data-v="ledger"></a>
+    <div class="foot">Local<br>v0.4</div>
+  </nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+/* ================= utilities ================= */
+const mq = matchMedia("(prefers-reduced-motion: reduce)");
+let reduce = mq.matches;
+try { mq.addEventListener("change", e => { reduce = e.matches; }); } catch (e) {}
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 250) : ms));
+const TODAY = new Date("2026-11-07T18:40:00");
+function ago(d) {
+  const days = Math.round((TODAY - new Date(d + "T12:00:00")) / 864e5);
+  if (days <= 0) return "today"; if (days === 1) return "yesterday";
+  if (days < 45) return days + " days ago";
+  return Math.round(days / 30) + " months ago";
+}
+function fmtDate(d) { return new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }); }
+
+const IC = {
+  overview: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+  mic: '<rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  micOff: '<path d="M3 3l18 18"/><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 10V6a3 3 0 0 0-5.7-1.3"/><path d="M5 11a7 7 0 0 0 11.5 5.3M19 11a7 7 0 0 1-.6 2.8M12 18v3"/>',
+  ledger: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
+  vol: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
+  volOff: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6M22 9l-5 6"/>',
+  keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
+  send: '<path d="M4 12 20 4l-6 16-3-7z"/><path d="m11 13 9-9"/>',
+  check: '<path d="m5 12 5 5 9-10"/>',
+  alert: '<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+  branch: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9c0 5-6 4-12 8"/>',
+  commit: '<circle cx="12" cy="12" r="3.5"/><path d="M2 12h6.5M15.5 12H22"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  fog: '<path d="M4 9h11M7 13h13M3 17h9M9 5h7"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14.9-3.9L4 9"/><path d="M4 4v5h5M4 13a8 8 0 0 0 14.9 3.9L20 15"/><path d="M20 20v-5h-5"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
+  shieldCheck: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/>',
+  debt: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+  wifiOff: '<path d="M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5-2.7M19 13a10 10 0 0 0-2.3-1.6M2 9.5a15 15 0 0 1 4.3-2.6M22 9.5A15 15 0 0 0 11 5.1M12 20h.01"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  code: '<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+};
+const ic = (n, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+
+/* ================= mock data ================= */
+const PEOPLE = {
+  sophina: { name: "Sophina", short: "Sophina (you)", init: "SO", c: "var(--p1)" },
+  marcus: { name: "Marcus Lee", short: "Marcus", init: "ML", c: "var(--p2)" },
+  priya: { name: "Priya Raman", short: "Priya", init: "PR", c: "var(--p3)" },
+  dev: { name: "Dev Okafor", short: "Dev", init: "DO", c: "var(--p4)" },
+};
+const ME = "sophina";
+const av = (p, size = 22) => `<span class="av" style="background:${PEOPLE[p].c};width:${size}px;height:${size}px;font-size:${Math.round(size * .4)}px" aria-hidden="true">${PEOPLE[p].init}</span>`;
+
+const MODULES = [
+  { id: "payments", label: "Payments" },
+  { id: "api", label: "API" },
+  { id: "billing", label: "Billing" },
+  { id: "data", label: "Data" },
+  { id: "platform", label: "Platform" },
+  { id: "notify", label: "Notifications" },
+];
+const FILES = [
+  { id: "webhook", m: "payments", path: "src/webhook.ts", sym: ["handleWebhook", "processPayment"], who: { marcus: "stale" }, last: { p: "marcus", d: "2026-10-12" }, change: { kind: "silent", text: "Agent moved the idempotency check after the charge call.", when: "12 min ago", commit: "a3f9c21" } },
+  { id: "retry", m: "payments", path: "src/lib/retry.ts", sym: ["retryWithBackoff"], who: {}, last: null, change: { kind: "inferred", text: "New file. The agent chose 250 ms exponential backoff and retries every error.", when: "12 min ago", commit: "a3f9c21" } },
+  { id: "idem", m: "payments", path: "src/payments/idempotency.ts", sym: ["checkIdempotency", "recordKey"], who: { marcus: "clear" }, last: { p: "marcus", d: "2026-10-12" } },
+  { id: "charge", m: "payments", path: "src/payments/charge.ts", sym: ["createCharge", "refundCharge"], who: { priya: "clear", marcus: "clear" }, last: { p: "priya", d: "2026-09-28" } },
+  { id: "signature", m: "payments", path: "src/payments/signature.ts", sym: ["verifySignature"], who: { marcus: "clear", dev: "clear" }, last: { p: "marcus", d: "2026-11-04" } },
+  { id: "routes", m: "api", path: "src/api/routes.ts", sym: ["registerRoutes"], who: { sophina: "clear", dev: "clear", priya: "clear" }, last: { p: "sophina", d: "2026-10-18" } },
+  { id: "auth", m: "api", path: "src/api/middleware/auth.ts", sym: ["requireSession", "verifyToken"], who: { dev: "stale" }, last: { p: "dev", d: "2026-07-30" }, stale: "Last review was 100 days ago. Reviews older than 90 days need a refresh." },
+  { id: "rate", m: "api", path: "src/api/rateLimit.ts", sym: ["rateLimit", "tokenBucket"], who: { marcus: "stale" }, last: { p: "marcus", d: "2026-09-14" }, change: { kind: "inferred", text: "Agent raised the burst limit from 20 to 50.", when: "yesterday", commit: "e19b0a4" } },
+  { id: "invoice", m: "billing", path: "src/billing/invoice.ts", sym: ["createInvoice", "finalizeInvoice"], who: { priya: "clear", sophina: "clear" }, last: { p: "sophina", d: "2026-10-21" } },
+  { id: "proration", m: "billing", path: "src/billing/proration.ts", sym: ["prorateInvoice"], who: { priya: "clear" }, last: { p: "priya", d: "2026-11-02" } },
+  { id: "tax", m: "billing", path: "src/billing/tax.ts", sym: ["computeTax", "taxRegion"], who: {}, last: null },
+  { id: "db", m: "data", path: "src/db/client.ts", sym: ["getPool"], who: { dev: "clear", marcus: "clear" }, last: { p: "dev", d: "2026-10-05" } },
+  { id: "queries", m: "data", path: "src/db/queries.ts", sym: ["findOrder", "markPaid"], who: { sophina: "clear" }, last: { p: "sophina", d: "2026-10-09" } },
+  { id: "migration", m: "data", path: "db/migrations/0042_add_attempts.sql", sym: ["webhook_events.attempts"], who: {}, last: null, change: { kind: "inferred", text: "Agent added an attempts column. Nothing reads it yet.", when: "12 min ago", commit: "a3f9c21" } },
+  { id: "worker", m: "platform", path: "src/queue/worker.ts", sym: ["runWorker", "dequeue"], who: {}, last: null, debt: { p: "dev", d: "2026-11-06" }, change: { kind: "requested", text: "Agent added dead-letter handling. Review skipped with debt.", when: "yesterday", commit: "7b2d0f1" } },
+  { id: "config", m: "platform", path: "src/config.ts", sym: ["loadConfig"], who: { dev: "clear", sophina: "clear", priya: "clear" }, last: { p: "dev", d: "2026-10-05" } },
+  { id: "logger", m: "platform", path: "src/lib/logger.ts", sym: ["logger"], who: { sophina: "clear", marcus: "clear", priya: "clear", dev: "clear" }, last: { p: "priya", d: "2026-10-27" } },
+  { id: "email", m: "notify", path: "src/notify/email.ts", sym: ["sendReceipt"], who: { sophina: "clear" }, last: { p: "sophina", d: "2026-10-30" } },
+  { id: "alerts", m: "notify", path: "src/notify/alerts.ts", sym: ["postAlert"], who: {}, last: null },
+];
+const F = id => FILES.find(f => f.id === id);
+
+const ACTIVITY = [
+  { k: "amber", i: "alert", h: 'Agent changed <span class="mono">handleWebhook</span>. Understanding needs review.', t: "12 min ago" },
+  { k: "muted", i: "fog", h: 'Fog returning on <span class="mono">rateLimit.ts</span> after commit <span class="mono">e19b0a4</span>.', t: "yesterday" },
+  { k: "amber", i: "debt", h: 'Dev skipped review of <span class="mono">runWorker</span> and recorded understanding debt.', t: "yesterday" },
+  { k: "teal", i: "check", h: 'Marcus demonstrated understanding of <span class="mono">verifySignature</span>.', t: "3 days ago" },
+  { k: "teal", i: "check", h: 'Priya demonstrated understanding of <span class="mono">prorateInvoice</span>.', t: "5 days ago" },
+];
+
+const LEDGER = [
+  { id: "l1", p: "marcus", f: "webhook", sym: "handleWebhook", st: "refresh", d: "2026-10-12", chg: { c: "a3f9c21", when: "today" },
+    ex: "Signature first, then the order-key check, then the charge. A duplicate delivery returns before we touch the card.",
+    why: "Code changed after this review. Commit a3f9c21 moved the idempotency check below the charge call.",
+    tr: [["Examiner", "What stops a duplicate delivery from charging the card twice?"], ["Marcus", "The idempotency check runs before createCharge. If the order key exists we return 200 and never charge."], ["Examiner", "And if the key write fails after the charge?"], ["Marcus", "Then a redelivery would charge again. We accepted that because recordKey has never failed in prod. I'd like the provider key too."]],
+    code: [24, ["  if (await checkIdempotency(key)) {", '    return res.status(200).send("duplicate");', "  }", "  const charge = await createCharge({ customerId, amount });", "  await recordKey(key, charge.id);"]] },
+  { id: "l2", p: "marcus", f: "idem", sym: "checkIdempotency", st: "ok", d: "2026-10-12", chg: null,
+    ex: "Keys live in Redis for 72 hours. After that a redelivery is treated as new, which the provider's own window covers.",
+    tr: [["Examiner", "How long is a key remembered?"], ["Marcus", "72 hours, matching the provider's redelivery window. Past that, the provider stops retrying anyway."]],
+    code: [8, ["export async function checkIdempotency(key: string) {", "  return (await redis.get(`idem:${key}`)) !== null;", "}"]] },
+  { id: "l3", p: "priya", f: "proration", sym: "prorateInvoice", st: "ok", d: "2026-11-02", chg: null,
+    ex: "Days are counted in the customer's billing timezone, so a mid-day plan change is billed as a full day on the new plan.",
+    tr: [["Examiner", "Why use the billing timezone instead of UTC?"], ["Priya", "Customers read invoices in their own day boundaries. UTC split one customer's day across two lines last spring."]],
+    code: [31, ["  const days = daysBetween(start, end, account.billingTz);", "  return Math.round(price * (days / periodDays));"]] },
+  { id: "l4", p: "priya", f: "charge", sym: "createCharge", st: "ok", d: "2026-09-28", chg: null,
+    ex: "createCharge passes our idempotency key through to the provider when one is given. Without it, every call is a new charge.",
+    tr: [["Examiner", "What happens if createCharge is called twice with the same input?"], ["Priya", "Two charges, unless you pass idempotencyKey. Then the provider returns the first charge."]],
+    code: [12, ["export async function createCharge(opts: ChargeOpts) {", "  return client.charges.create(opts, {", "    idempotencyKey: opts.idempotencyKey,", "  });", "}"]] },
+  { id: "l5", p: "dev", f: "auth", sym: "verifyToken", st: "refresh", d: "2026-07-30", chg: null, age: true,
+    ex: "Tokens are checked against the rotating key set. A token signed with a retired key fails closed.",
+    why: "Reviewed 100 days ago. Reviews older than 90 days need a refresh.",
+    tr: [["Examiner", "What happens to tokens signed with a key that has just rotated out?"], ["Dev", "They fail. We keep the previous key for one hour, so in-flight sessions survive the rotation."]],
+    code: [19, ["  const key = keys.find(k => k.kid === header.kid);", "  if (!key || key.retiredAt < Date.now() - HOUR) {", "    throw new AuthError(\"unknown signing key\");", "  }"]] },
+  { id: "l6", p: "dev", f: "worker", sym: "runWorker", st: "debt", d: "2026-11-06", chg: null,
+    ex: "Skipped with debt. No explanation recorded yet for the dead-letter path.",
+    why: "Review was skipped. The push went ahead and this gap stays open until someone reviews it.",
+    tr: [["Viva", "Review skipped by Dev. Reason given: release window closing."]],
+    code: [44, ["  if (job.attempts >= MAX_ATTEMPTS) {", "    await deadLetter.push(job);", "    return;", "  }"]] },
+  { id: "l7", p: "sophina", f: "email", sym: "sendReceipt", st: "ok", d: "2026-10-30", chg: null,
+    ex: "Receipts send after markPaid commits, so a failed payment never produces an email.",
+    tr: [["Examiner", "Could a customer get a receipt for a payment that failed?"], ["Sophina", "No. sendReceipt runs on the order.paid event, which is only emitted after markPaid commits."]],
+    code: [15, ["events.on(\"order.paid\", async ({ orderId }) => {", "  await sendReceipt(orderId);", "});"]] },
+  { id: "l8", p: "sophina", f: "invoice", sym: "finalizeInvoice", st: "ok", d: "2026-10-21", chg: null,
+    ex: "Finalizing locks line items. Any change after that becomes a credit note instead of an edit.",
+    tr: [["Examiner", "What happens if a line item changes after finalizeInvoice?"], ["Sophina", "It can't be edited. We issue a credit note and a new invoice so the audit trail stays intact."]],
+    code: [52, ["  if (invoice.status === \"final\") {", "    return issueCreditNote(invoice, change);", "  }"]] },
+  { id: "l9", p: "marcus", f: "rate", sym: "tokenBucket", st: "refresh", d: "2026-09-14", chg: { c: "e19b0a4", when: "yesterday" },
+    ex: "Bucket refills at 10 tokens a second with a burst of 20. Bursts past that get a 429 with Retry-After.",
+    why: "Code changed after this review. Commit e19b0a4 raised the burst limit from 20 to 50.",
+    tr: [["Examiner", "What does a client see when it exceeds the burst?"], ["Marcus", "A 429 with Retry-After set from the refill rate. The SDK backs off on that header."]],
+    code: [9, ["const BURST = 50; // was 20", "const REFILL_PER_SEC = 10;"]] },
+  { id: "l10", p: "sophina", f: "queries", sym: "markPaid", st: "partial", d: "2026-10-09", chg: null,
+    ex: "Explained the happy path clearly. Was unsure what happens when the order is already paid.",
+    why: "Partly demonstrated. One follow-up question was left open.",
+    tr: [["Examiner", "What happens if markPaid runs twice for the same order?"], ["Sophina", "The second update matches zero rows because of the status filter… I think it then returns false? I'm not sure the caller checks."]],
+    code: [27, ["  const res = await db.query(", "    \"UPDATE orders SET status='paid' WHERE id=$1 AND status='pending'\", [id]);", "  return res.rowCount === 1;"]] },
+  { id: "l11", p: "dev", f: "config", sym: "loadConfig", st: "ok", d: "2026-10-05", chg: null,
+    ex: "Missing required variables fail at boot, not at first use. Optional ones have typed defaults.",
+    tr: [["Examiner", "When does a missing PAYMENTS_SECRET get noticed?"], ["Dev", "At boot. loadConfig validates the schema and the process exits before it binds the port."]],
+    code: [6, ["export const config = schema.parse(process.env);"]] },
+  { id: "l12", p: "marcus", f: "signature", sym: "verifySignature", st: "ok", d: "2026-11-04", chg: null,
+    ex: "Compares in constant time and rejects timestamps older than five minutes to stop replays.",
+    tr: [["Examiner", "Why reject old timestamps if the signature is valid?"], ["Marcus", "A captured request would still verify. The five-minute window limits replay."]],
+    code: [14, ["  if (Date.now() - ts > 5 * 60_000) return null;", "  return timingSafeEqual(sig, expected) ? body : null;"]] },
+];
+const STATUS = {
+  ok: { l: "Demonstrated", cls: "teal", i: "check" },
+  refresh: { l: "Needs refresh", cls: "slate", i: "refresh" },
+  debt: { l: "Understanding debt", cls: "amber", i: "debt" },
+  partial: { l: "Partly demonstrated", cls: "blue", i: "eye" },
+  issue: { l: "Demonstrated · issue found", cls: "teal", i: "check" },
+};
+
+/* ----- change groups and their evidence ----- */
+const ORIGIN = {
+  R: { l: "Requested", d: "You asked for it, directly or in an approved plan." },
+  I: { l: "Inferred", d: "Follows from the request. The details were chosen by the agent and mentioned." },
+  S: { l: "Silent", d: "Not asked for and not mentioned anywhere by the agent." },
+};
+const GROUPS = {
+  g1: { o: "R", title: "Retry helper import and a 3-attempt limit", lines: "6, 8",
+    req: "Add retries to the payment webhook.", agent: "Plan step 1 (approved): “Wrap the charge in a retry, up to 3 attempts.”",
+    signals: [["check", "Directly fulfils the request"], ["check", "Attempt limit appears in the plan you approved"]], conf: "High" },
+  g2: { o: "I", title: "250 ms exponential backoff that retries every error", lines: "9, 28 · retry.ts 10–11",
+    req: "Add retries to the payment webhook.", agent: "Summary: “Uses standard exponential backoff.”",
+    signals: [["info", "Retries need some timing, so backoff follows from the request"], ["info", "The 250 ms base and retry-on-any-error were the agent's choice"], ["check", "Mentioned in the agent's summary"]], conf: "Medium" },
+  g3: { o: "R", title: "Payment processing wrapped in retryWithBackoff", lines: "25–34, 37, 45",
+    req: "Add retries to the payment webhook.", agent: "Summary: “Added retries with exponential backoff to the webhook handler.”",
+    signals: [["check", "Directly fulfils the request"], ["check", "Described in the commit message"]], conf: "High" },
+  g4: { o: "S", title: "Idempotency check moved after the charge call", lines: "38–44 (and removed old 25–27)",
+    req: "Add retries to the payment webhook.", agent: "Summary: “Added retries with exponential backoff to the webhook handler.” No mention of idempotency.",
+    signals: [["alert", "Not in the request, the plan, the summary or the commit message"], ["alert", "Changes the order of an irreversible side effect (charging a card) relative to its guard"], ["alert", "Interacts with the new retry loop, which can now re-run the charge"]], conf: "High" },
+  g5: { o: "R", title: "Check the key before charging; pass it to the provider", lines: "38–43",
+    req: "Your reasoning, sent to the agent after the last review.", agent: "Commit c81d4e7: “fix: check idempotency before charge and pass provider idempotency key”",
+    signals: [["check", "Matches the fix you asked for, line by line"], ["check", "No other lines changed"]], conf: "High" },
+  g6: { o: "R", title: "New retry helper", lines: "1–9, 12–15",
+    req: "Add retries to the payment webhook.", agent: "Summary: “Added a small retryWithBackoff helper in src/lib.”",
+    signals: [["check", "Supports the requested retries"]], conf: "High" },
+  g7: { o: "I", title: "attempts column on webhook_events", lines: "1–2",
+    req: "Add retries to the payment webhook.", agent: "Summary: “Tracks attempts for observability.”",
+    signals: [["info", "Related to retries but not asked for"], ["info", "Mentioned in the summary; nothing reads the column yet"]], conf: "Medium" },
+};
+
+/* ----- code ----- [newNo, diff, origin, group, text] ----- */
+const C = (n, d, o, g, t) => ({ n, d, o, g, t });
+const ctx = (n, t) => C(n, " ", null, null, t);
+const WEBHOOK_HEAD = [
+  ctx(1, 'import type { Request, Response } from "express";'),
+  ctx(2, 'import { verifySignature } from "./payments/signature";'),
+  ctx(3, 'import { checkIdempotency, recordKey } from "./payments/idempotency";'),
+  ctx(4, 'import { createCharge } from "./payments/charge";'),
+  ctx(5, 'import { logger } from "./lib/logger";'),
+];
+const WEBHOOK_MID = [
+  ctx(10, ""),
+  ctx(11, "export async function handleWebhook(req: Request, res: Response) {"),
+  ctx(12, "  const event = verifySignature(req);"),
+  ctx(13, "  if (!event) {"),
+  ctx(14, '    return res.status(400).send("invalid signature");'),
+  ctx(15, "  }"),
+  ctx(16, ""),
+  ctx(17, '  if (event.type !== "payment_intent.succeeded") {'),
+  ctx(18, '    return res.status(200).send("ignored");'),
+  ctx(19, "  }"),
+  ctx(20, ""),
+  ctx(21, "  const { orderId, amount, customerId } = event.data;"),
+  ctx(22, "  const key = `order:${orderId}:charge`;"),
+  ctx(23, '  logger.info("webhook.received", { orderId });'),
+  ctx(24, ""),
+];
+const CODE = {
+  1: {
+    webhook: { path: "src/webhook.ts", lines: [
+      ...WEBHOOK_HEAD,
+      C(6, "+", "R", "g1", 'import { retryWithBackoff } from "./lib/retry";'),
+      ctx(7, ""),
+      C(8, "+", "R", "g1", "const MAX_ATTEMPTS = 3;"),
+      C(9, "+", "I", "g2", "const BASE_DELAY_MS = 250;"),
+      ...WEBHOOK_MID,
+      C(null, "-", "S", "g4", "  if (await checkIdempotency(key)) {"),
+      C(null, "-", "S", "g4", '    return res.status(200).send("duplicate");'),
+      C(null, "-", "S", "g4", "  }"),
+      C(null, "-", "R", "g3", "  const charge = await createCharge({ customerId, amount });"),
+      C(null, "-", "R", "g3", "  await recordKey(key, charge.id);"),
+      C(null, "-", "R", "g3", '  return res.status(200).send("ok");'),
+      C(25, "+", "R", "g3", "  try {"),
+      C(26, "+", "R", "g3", "    await retryWithBackoff("),
+      C(27, "+", "R", "g3", "      () => processPayment(key, customerId, amount),"),
+      C(28, "+", "I", "g2", "      { attempts: MAX_ATTEMPTS, baseDelayMs: BASE_DELAY_MS }"),
+      C(29, "+", "R", "g3", "    );"),
+      C(30, "+", "R", "g3", '    return res.status(200).send("ok");'),
+      C(31, "+", "R", "g3", "  } catch (err) {"),
+      C(32, "+", "R", "g3", '    logger.error("webhook.failed", { orderId, err });'),
+      C(33, "+", "R", "g3", '    return res.status(500).send("retry later");'),
+      C(34, "+", "R", "g3", "  }"),
+      ctx(35, "}"),
+      ctx(36, ""),
+      C(37, "+", "R", "g3", "async function processPayment(key: string, customerId: string, amount: number) {"),
+      C(38, "+", "S", "g4", "  const charge = await createCharge({ customerId, amount });"),
+      C(39, "+", "S", "g4", '  logger.info("charge.created", { id: charge.id });'),
+      C(40, "+", "S", "g4", ""),
+      C(41, "+", "S", "g4", "  if (await checkIdempotency(key)) {"),
+      C(42, "+", "S", "g4", "    return; // already processed"),
+      C(43, "+", "S", "g4", "  }"),
+      C(44, "+", "S", "g4", "  await recordKey(key, charge.id);"),
+      C(45, "+", "R", "g3", "}"),
+    ] },
+    retry: { path: "src/lib/retry.ts", lines: [
+      C(1, "+", "R", "g6", "export async function retryWithBackoff<T>("),
+      C(2, "+", "R", "g6", "  fn: () => Promise<T>,"),
+      C(3, "+", "R", "g6", "  { attempts, baseDelayMs }: { attempts: number; baseDelayMs: number }"),
+      C(4, "+", "R", "g6", "): Promise<T> {"),
+      C(5, "+", "R", "g6", "  let lastError: unknown;"),
+      C(6, "+", "R", "g6", "  for (let i = 0; i < attempts; i++) {"),
+      C(7, "+", "R", "g6", "    try {"),
+      C(8, "+", "R", "g6", "      return await fn();"),
+      C(9, "+", "R", "g6", "    } catch (err) {"),
+      C(10, "+", "I", "g2", "      lastError = err; // retries every error, including timeouts"),
+      C(11, "+", "I", "g2", "      await sleep(baseDelayMs * 2 ** i);"),
+      C(12, "+", "R", "g6", "    }"),
+      C(13, "+", "R", "g6", "  }"),
+      C(14, "+", "R", "g6", "  throw lastError;"),
+      C(15, "+", "R", "g6", "}"),
+    ] },
+    migration: { path: "db/migrations/0042_add_attempts.sql", lines: [
+      C(1, "+", "I", "g7", "ALTER TABLE webhook_events"),
+      C(2, "+", "I", "g7", "  ADD COLUMN attempts integer NOT NULL DEFAULT 0;"),
+    ] },
+  },
+  2: {
+    webhook: { path: "src/webhook.ts", lines: [
+      ...WEBHOOK_HEAD,
+      ctx(6, 'import { retryWithBackoff } from "./lib/retry";'),
+      ctx(7, ""),
+      ctx(8, "const MAX_ATTEMPTS = 3;"),
+      ctx(9, "const BASE_DELAY_MS = 250;"),
+      ...WEBHOOK_MID,
+      ctx(25, "  try {"),
+      ctx(26, "    await retryWithBackoff("),
+      ctx(27, "      () => processPayment(key, customerId, amount),"),
+      ctx(28, "      { attempts: MAX_ATTEMPTS, baseDelayMs: BASE_DELAY_MS }"),
+      ctx(29, "    );"),
+      ctx(30, '    return res.status(200).send("ok");'),
+      ctx(31, "  } catch (err) {"),
+      ctx(32, '    logger.error("webhook.failed", { orderId, err });'),
+      ctx(33, '    return res.status(500).send("retry later");'),
+      ctx(34, "  }"),
+      ctx(35, "}"),
+      ctx(36, ""),
+      ctx(37, "async function processPayment(key: string, customerId: string, amount: number) {"),
+      C(38, "+", "R", "g5", "  if (await checkIdempotency(key)) {"),
+      C(39, "+", "R", "g5", "    return; // already processed"),
+      C(40, "+", "R", "g5", "  }"),
+      C(null, "-", "R", "g5", "  const charge = await createCharge({ customerId, amount });"),
+      C(41, "+", "R", "g5", "  const charge = await createCharge({"),
+      C(42, "+", "R", "g5", "    customerId, amount, idempotencyKey: key,"),
+      C(43, "+", "R", "g5", "  });"),
+      ctx(44, '  logger.info("charge.created", { id: charge.id });'),
+      C(null, "-", "R", "g5", ""),
+      C(null, "-", "R", "g5", "  if (await checkIdempotency(key)) {"),
+      C(null, "-", "R", "g5", "    return; // already processed"),
+      C(null, "-", "R", "g5", "  }"),
+      ctx(45, "  await recordKey(key, charge.id);"),
+      ctx(46, "}"),
+    ] },
+  },
+};
+
+/* ----- exam scripts ----- */
+const ROUNDS = {
+  1: {
+    commit: "a3f9c21", request: "Add retries to the payment webhook.",
+    by: "Sophina → coding agent (simulated) · today 18:12",
+    questions: [
+      { text: "If the first attempt charges the card, then times out, what happens on the retry?", lines: [38, 44],
+        follow: { text: "The check now runs after the charge. Look at line 41. Walk me through the order.", lines: [41, 41] },
+        sample: "Um, so the retry wrapper catches the timeout and calls processPayment again… and the idempotency check should stop it from going through twice, I think.",
+        sampleFollow: "Okay. Line 38 charges first, then line 41 checks the key. On the retry the key was never recorded, because the first attempt timed out before line 44. So createCharge runs again and the customer is charged twice.",
+        typedSample: "The retry calls createCharge again before checkIdempotency runs. The key was never recorded because the first attempt timed out before recordKey, so the card gets charged twice." },
+      { text: "retryWithBackoff wraps processPayment. Which failures does it retry, and which side effects can repeat when it does?", lines: [25, 29],
+        sample: "It retries any thrown error, timeouts included. The charge is the side effect that repeats. The log line repeats too, but that's harmless.",
+        ack: "Right. Every error is retried, so anything before the guard can run more than once." },
+      { text: "What change would make it safe for a retry to run twice?", lines: [38, 44],
+        sample: "Check the key before charging. And pass the order key to createCharge as the provider's idempotency key, so even if our check misses, the provider won't charge twice.",
+        ack: "Thank you. That's clear enough to hand to the agent." },
+    ],
+  },
+  2: {
+    commit: "c81d4e7", request: "Check the idempotency key before charging and pass it to createCharge.",
+    by: "Your reasoning → coding agent (simulated) · sent after the last review",
+    questions: [
+      { text: "Same scenario after the fix. The first attempt charges the card, then times out. What happens on the retry now?", lines: [38, 45],
+        follow: { text: "The key still isn't recorded on the retry. Look at line 42. What does the provider do with a key it has seen before?", lines: [42, 42] },
+        sample: "The retry checks the key at line 38. It isn't recorded yet, so it calls createCharge again, but with the same idempotencyKey. The provider returns the original charge instead of making a new one. One charge.",
+        typedSample: "Line 38 checks first but the key isn't recorded, so createCharge runs again with the same idempotencyKey and the provider returns the original charge. The customer is charged once." },
+      { text: "What does passing idempotencyKey to createCharge protect against that the local check doesn't?", lines: [41, 43],
+        sample: "Two deliveries arriving at the same time, and the gap between the charge and recordKey. Our check only knows about keys we've already saved.",
+        ack: "Yes. The local check can't see a charge that hasn't been recorded yet." },
+      { text: "If recordKey fails after a successful charge, what does the customer experience?", lines: [44, 45],
+        sample: "The handler returns 500, the provider redelivers, and the retry gets the same charge back because of the key. They're charged once. We just see an extra log line.",
+        ack: "That matches the code. Thanks for walking through it." },
+    ],
+  },
+};
+const BUG_RE = /(charg\w*|bill\w*).{0,80}(twice|double|again|second|two|duplicate)|(twice|double|duplicate).{0,40}charg/i;
+const FIX_RE = /(idempotency\s*key|idempotencykey|same key|provider|original charge|once|before)/i;
+
+/* ================= state ================= */
+const freshExam = round => ({
+  round, started: false, phase: "intro", qi: 0, follow: false, transcript: [], mode: "voice",
+  muted: false, answers: [], identified: false, guided: false, result: null, file: "webhook",
+  focus: null, group: null, draft: "", skipConfirm: false, tab: "q", resultView: "summary",
+});
+const S = {
+  view: "map", mapMode: "team", mapQuery: "", fogOn: true, sel: null, mapLoaded: false,
+  conn: "ok", mic: "prompt", push: "paused", agent: null, fixed: false, debt: false,
+  ledgerQ: "", ledgerFilter: "all", ledgerGroup: "person", ledgerSel: "l1", ledgerLoaded: false, ledgerEmpty: false,
+  exam: freshExam(1), demoOpen: false,
+};
+let FLOW = 0; // cancellation token for scripted examiner flow
+const E = () => S.exam;
+
+/* ================= shell ================= */
+const NAV = { overview: ["overview", "Overview"], map: ["map", "Repository Map"], exam: ["mic", "Viva Exam"], ledger: ["ledger", "Under&shy;standing Ledger"] };
+function renderNav() {
+  $$(".nav").forEach(a => {
+    const v = a.dataset.v, [i, l] = NAV[v];
+    let badge = "";
+    if (v === "exam" && (S.push === "paused" || S.push === "blocked")) badge = `<span class="badge ${S.push === "blocked" ? "red" : ""}" aria-label="1 push waiting">1</span>`;
+    a.innerHTML = ic(i) + `<span>${l}</span>` + badge;
+    if (v === S.view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+}
+function renderConn() {
+  const el = $("#conn");
+  el.className = "conn " + (S.conn === "ok" ? "" : S.conn);
+  if (S.conn === "ok") el.innerHTML = `<span class="dot" aria-hidden="true"></span><span class="lbl">Local agent connected</span>`;
+  else if (S.conn === "retrying") el.innerHTML = `<span class="dot" aria-hidden="true"></span><span class="lbl">Reconnecting…</span>`;
+  else el.innerHTML = `<span class="dot" aria-hidden="true"></span><span class="lbl">Can't reach local service</span> <button id="connRetry">Retry</button>`;
+}
+function retryConn() {
+  S.conn = "retrying"; renderConn(); refreshExamBits();
+  setTimeout(() => { S.conn = "ok"; renderConn(); refreshExamBits(); toast("check", "Reconnected. Your typed answer was kept."); }, 1300);
+}
+function toast(i, text) {
+  const t = document.createElement("div"); t.className = "toast"; t.innerHTML = ic(i) + `<span>${text}</span>`;
+  $("#toasts").appendChild(t); setTimeout(() => t.remove(), 3800);
+}
+function renderDemo() {
+  const m = $("#demoMenu");
+  m.innerHTML = `<h3>Demo states (simulated)</h3>
+    <button role="menuitem" data-demo="conn">${ic("wifiOff", S.conn !== "ok" ? "on" : "")}<span>${S.conn !== "ok" ? "Restore connection" : "Simulate connection failure"}<small>Local Viva service stops responding</small></span></button>
+    <button role="menuitem" data-demo="mic">${ic("micOff", S.mic === "denied" ? "on" : "")}<span>${S.mic === "denied" ? "Unblock microphone" : "Block microphone"}<small>Browser refuses microphone access</small></span></button>
+    <button role="menuitem" data-demo="mic-reset">${ic("mic")}<span>Ask for microphone again<small>Shows the permission step next time</small></span></button>
+    <button role="menuitem" data-demo="loading">${ic("refresh")}<span>Show loading states<small>Reloads the map and ledger</small></span></button>
+    <button role="menuitem" data-demo="empty">${ic("ledger", S.ledgerEmpty ? "on" : "")}<span>${S.ledgerEmpty ? "Restore ledger records" : "Show empty ledger"}<small>A repository with no reviews yet</small></span></button>
+    <button role="menuitem" data-demo="reset">${ic("back")}<span>Reset the demo<small>Start again from the risky change</small></span></button>`;
+}
+function setDemo(open) {
+  S.demoOpen = open; const m = $("#demoMenu"); m.hidden = !open;
+  $("#demoBtn").setAttribute("aria-expanded", String(open));
+  if (open) { renderDemo(); $("button", m).focus(); }
+}
+
+/* ================= routing ================= */
+const VIEWS = ["overview", "map", "exam", "ledger"];
+function route() {
+  const h = (location.hash || "").slice(1);
+  const v = VIEWS.includes(h) ? h : "map";
+  const changed = v !== S.view;
+  S.view = v; render(changed);
+}
+function render(focusHead) {
+  renderNav(); renderConn();
+  const main = $("#main");
+  stopFog();
+  if (S.view === "overview") main.innerHTML = viewOverview();
+  if (S.view === "map") main.innerHTML = viewMap();
+  if (S.view === "ledger") main.innerHTML = viewLedger();
+  if (S.view === "exam") { main.innerHTML = viewExam(); mountExam(); }
+  if (S.view === "map") mountMap();
+  if (S.view === "ledger") mountLedger();
+  if (focusHead) { const h = $("#main h1"); if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); } main.scrollTop = 0; }
+}
+
+/* ================= derived ================= */
+function clearPeople(f, mode = S.mapMode) { return Object.entries(f.who).filter(([p, s]) => s === "clear" && (mode === "team" || p === ME)).map(([p]) => p); }
+function stalePeople(f, mode = S.mapMode) { return Object.entries(f.who).filter(([p, s]) => s === "stale" && (mode === "team" || p === ME)).map(([p]) => p); }
+function fstate(f, mode = S.mapMode) { return clearPeople(f, mode).length ? "clear" : stalePeople(f, mode).length ? "stale" : "fog"; }
+function stats(mode = S.mapMode) {
+  const und = FILES.filter(f => fstate(f, mode) === "clear").length;
+  return {
+    und, total: FILES.length, pct: Math.round(und / FILES.length * 100),
+    risky: FILES.filter(f => f.problem || (f.change && f.change.kind === "silent")).length,
+    single: FILES.filter(f => clearPeople(f, "team").length === 1).length,
+    stale: FILES.filter(f => fstate(f, mode) === "stale").length,
+    debt: FILES.filter(f => f.debt).length,
+  };
+}
+
+/* ================= overview ================= */
+function pushPill() {
+  return {
+    paused: `<span class="pill amber">${ic("pause")}Push paused</span>`,
+    blocked: `<span class="pill red">${ic("lock")}Push blocked</span>`,
+    allowed: `<span class="pill teal">${ic("unlock")}Push allowed</span>`,
+    debt: `<span class="pill amber">${ic("debt")}Push allowed with debt</span>`,
+  }[S.push];
+}
+function feedHTML(n = 6) {
+  return `<ul class="feed">${ACTIVITY.slice(0, n).map((a, i) => `<li class="${a.fresh ? "new" : ""}">${ic(a.i, "t-" + a.k)}<div>${a.h}<time>${a.t}</time></div></li>`).join("")}</ul>`;
+}
+function viewOverview() {
+  const st = stats("team");
+  const webhook = F("webhook");
+  let pushCard;
+  if (S.push === "paused" || S.push === "blocked") {
+    pushCard = `<section class="card paused" aria-labelledby="pc-h">
+      <div class="row">${pushPill()}<span class="sim">${ic("bolt")}Agent simulated</span></div>
+      <h2 id="pc-h">${S.push === "blocked" ? "Potential double charge in processPayment" : "1 silent decision in src/webhook.ts"}</h2>
+      <div class="meta"><span class="mono">feat/webhook-retries</span><span class="mono">${ROUNDS[E().round].commit}</span><span>About 90 seconds</span></div>
+      <blockquote>${S.push === "blocked" ? "You found a real problem. Send your reasoning to the agent, then review the fix." : "You asked for retries. The agent also moved the idempotency check after the charge call, without being asked."}</blockquote>
+      <div class="row"><a class="btn primary" href="#exam">${S.push === "blocked" ? "Open result" : "Start review"} ${ic("arrow")}</a><button class="btn ghost" data-open-node="webhook">See it on the map</button></div>
+    </section>`;
+  } else {
+    pushCard = `<section class="card paused" style="border-color:var(--line)">
+      <div class="row">${pushPill()}</div>
+      <h2>No pushes waiting for review</h2>
+      <p class="t-muted">${S.push === "debt" ? "The last push went ahead with understanding debt on src/webhook.ts." : "src/webhook.ts was reviewed and the fog has cleared."}</p>
+      <div class="row"><a class="btn" href="#map">Open the map</a></div></section>`;
+  }
+  const mods = MODULES.map(m => {
+    const fs = FILES.filter(f => f.m === m.id), n = fs.length;
+    const c = fs.filter(f => fstate(f, "team") === "clear").length, s = fs.filter(f => fstate(f, "team") === "stale").length;
+    return `<div class="mod-row"><span class="mono">${m.label}</span>
+      <div class="mod-bar" role="img" aria-label="${c} of ${n} files understood, ${s} need refresh"><i style="width:${c / n * 100}%;background:var(--teal)"></i><i style="width:${s / n * 100}%;background:rgba(169,179,194,.45)"></i></div>
+      <span class="pct">${c}/${n}</span></div>`;
+  }).join("");
+  return `<div class="view">
+    <div class="view-head"><div><span class="eyebrow">Overview</span><h1>ledgerline/payments-api</h1></div></div>
+    <div class="ov-hero">
+      <section class="card ov-intro">
+        <p class="tagline">You didn't write it. <em>Can you defend it?</em></p>
+        <p>Viva finds the decisions your coding agent made without being asked, shows where your team's understanding has gaps, and asks a few short questions before risky changes ship.</p>
+        <div class="row" style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="#map">${ic("map")}Open the map</a><a class="btn ghost" href="#ledger">${ic("ledger")}Understanding ledger</a></div>
+      </section>
+      ${pushCard}
+    </div>
+    <div class="stats">${statTiles(st)}</div>
+    <div class="ov-grid">
+      <section class="card"><h2>Understanding by module</h2>${mods}
+        <p class="t-muted" style="font-size:12px;margin-top:10px">Teal: someone has shown they understand it. Grey: needs refresh. Hatched: fog.</p></section>
+      <section class="card"><h2>Recent activity</h2>${feedHTML(5)}</section>
+    </div></div>`;
+}
+function statTiles(st) {
+  return `<div class="card stat"><span class="k">${ic("eye", "t-teal")}Understanding coverage</span><span class="v">${st.pct}%<small>${st.und} of ${st.total} files</small></span><span class="bar"><i style="width:${st.pct}%"></i></span></div>
+    <div class="card stat"><span class="k">${ic("alert", "t-amber")}Risky AI changes</span><span class="v">${st.risky}<small>${st.risky === 1 ? "silent decision" : "need review"}</small></span></div>
+    <div class="card stat"><span class="k">${ic("user", "t-muted")}Understood by one person</span><span class="v">${st.single}<small>files</small></span></div>
+    <div class="card stat"><span class="k">${ic("fog", "t-muted")}Fog returning</span><span class="v">${st.stale}<small>changed or aging</small></span></div>`;
+}
+
+/* ================= map ================= */
+function nodeMatches(f, q) { if (!q) return false; q = q.toLowerCase(); return f.path.toLowerCase().includes(q) || f.sym.some(s => s.toLowerCase().includes(q)); }
+function nodeHTML(f) {
+  const st = fstate(f), q = S.mapQuery.trim();
+  const m = nodeMatches(f, q);
+  const cp = clearPeople(f), sp = stalePeople(f);
+  const parts = f.path.split("/"), name = parts.pop(), dir = parts.join("/") + "/";
+  const flags = [];
+  if (f.problem) flags.push(`<span class="flag red" title="Confirmed problem">${ic("alert")}</span>`);
+  else if (f.change && f.change.kind === "silent") flags.push(`<span class="flag amber" title="Silent AI decision">${ic("alert")}</span>`);
+  else if (f.change && f.change.kind !== "silent" && f.change.when.includes("min")) flags.push(`<span class="flag slate" title="Changed by agent">${ic("bolt")}</span>`);
+  if (f.debt) flags.push(`<span class="flag amber" title="Understanding debt">${ic("debt")}</span>`);
+  const who = cp.length || sp.length
+    ? cp.map(p => `<span class="d" style="background:${PEOPLE[p].c}" title="${PEOPLE[p].name}: demonstrated">${PEOPLE[p].init}</span>`).join("") +
+      sp.map(p => `<span class="d stale" style="color:${PEOPLE[p].c}" title="${PEOPLE[p].name}: needs refresh">${PEOPLE[p].init}</span>`).join("")
+    : `<span class="none">No one yet</span>`;
+  const desc = st === "clear" ? `understood by ${cp.map(p => PEOPLE[p].short).join(", ")}` : st === "stale" ? "understanding needs refresh" : "in fog, no demonstrated understanding";
+  const flagDesc = f.problem ? ", confirmed problem" : f.change && f.change.kind === "silent" ? ", silent AI decision" : "";
+  return `<button class="node ${m ? "match" : ""} ${q && !m ? "dim" : ""}" data-id="${f.id}" data-state="${st}" aria-pressed="${S.sel === f.id}" style="--c:${cp[0] ? PEOPLE[cp[0]].c : "var(--teal)"}" aria-label="${esc(f.path)}, ${desc}${flagDesc}">
+    <span class="nt"><span class="fn">${esc(name)}</span><span class="flags">${flags.join("")}</span></span>
+    <span class="dir">${esc(dir)}</span>
+    <span class="syms">${f.sym.map(s => `<span class="sym ${q && s.toLowerCase().includes(q.toLowerCase()) ? "match" : ""}">${esc(s)}</span>`).join("")}</span>
+    <span class="who">${who}</span></button>`;
+}
+function viewMap() {
+  const st = stats(), q = S.mapQuery.trim();
+  const anyMatch = !q || FILES.some(f => nodeMatches(f, q));
+  const stage = !S.mapLoaded
+    ? `<div class="stage" aria-busy="true"><p class="t-muted" style="margin:4px 4px 14px">Mapping 20 files and 31 symbols…</p><div class="modules">${MODULES.map(() => `<div class="module"><div class="skel" style="height:16px;width:40%"></div>${'<div class="skel" style="height:70px"></div>'.repeat(3)}</div>`).join("")}</div></div>`
+    : `<div class="stage" id="stage">
+      ${anyMatch ? "" : `<div class="empty" style="position:relative;z-index:5">${ic("search")}<h3>No files or symbols match “${esc(q)}”</h3><p>Try a function name such as handleWebhook, or part of a path such as billing/.</p><button class="btn sm" id="clearSearch">Clear search</button></div>`}
+      <div class="modules">${MODULES.map(m => {
+        const fs = FILES.filter(f => f.m === m.id);
+        const c = fs.filter(f => fstate(f) === "clear").length;
+        return `<section class="module" aria-label="${m.label} module"><div class="module-h"><b>${m.label}</b><span>${c}/${fs.length} understood</span></div>${fs.map(nodeHTML).join("")}</section>`;
+      }).join("")}</div>
+      <canvas id="fog" aria-hidden="true"></canvas></div>`;
+  return `<div class="view">
+    <div class="view-head"><div><span class="eyebrow">The fog</span><h1>Repository map</h1><p class="sub">Fog covers code that nobody has shown they understand. It clears after a review and slowly returns when the code changes.</p></div>
+      <div class="map-tools" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="seg" role="group" aria-label="Whose understanding"><button data-mode="team" aria-pressed="${S.mapMode === "team"}">Team</button><button data-mode="me" aria-pressed="${S.mapMode === "me"}">Mine</button></div>
+        <label class="search">${ic("search")}<span class="sr">Search files and symbols</span><input id="mapSearch" type="search" placeholder="Search files and symbols" value="${esc(S.mapQuery)}" autocomplete="off"><kbd aria-hidden="true">/</kbd></label>
+      </div></div>
+    <div class="stats" id="mapStats">${statTiles(st)}</div>
+    <div class="map-body">${stage}<aside class="map-side" id="mapSide" aria-label="Map details">${mapSide()}</aside></div></div>`;
+}
+function mapSide() {
+  if (S.sel) return `<section class="card">${detailHTML(F(S.sel))}</section>`;
+  return `<section class="card"><h2>Legend</h2><div class="legend">
+      <div class="li"><span class="sw fog"></span><span><b>Fog</b>. No one has demonstrated understanding.</span></div>
+      <div class="li"><span class="sw thin"></span><span><b>Thin fog</b>. Understanding needs refresh: the code changed or the review is over 90 days old.</span></div>
+      <div class="li"><span class="sw clear"></span><span><b>Clear</b>. Someone explained it in a review. The edge shows who.</span></div>
+      <div class="people">${Object.keys(PEOPLE).map(p => `<span><i style="background:${PEOPLE[p].c}"></i>${PEOPLE[p].short}</span>`).join("")}</div>
+      <div class="people" style="gap:6px 14px"><span><span class="flag amber">${ic("alert")}</span>Silent AI decision</span><span><span class="flag red">${ic("alert")}</span>Confirmed problem</span><span><span class="flag slate">${ic("bolt")}</span>Agent change</span><span><span class="flag amber">${ic("debt")}</span>Debt</span></div>
+      <label class="toggle"><input type="checkbox" id="fogToggle" ${S.fogOn ? "checked" : ""}> Show fog effect</label>
+    </div></section>
+    <section class="card"><h2>Recent activity</h2>${feedHTML(5)}</section>`;
+}
+function detailHTML(f) {
+  const cp = clearPeople(f, "team"), sp = stalePeople(f, "team");
+  const people = [...cp.map(p => [p, "Demonstrated", "teal"]), ...sp.map(p => [p, "Needs refresh", "slate"])];
+  let callout = "";
+  if (f.problem) callout = `<div class="callout red">${ic("alert")}<span><b>Confirmed problem.</b> A retry can charge the card twice. Push is blocked until it's fixed or skipped with debt.</span></div>`;
+  else if (f.change && f.change.kind === "silent") callout = `<div class="callout amber">${ic("alert")}<span><b>Silent AI decision</b> in <span class="mono">${f.change.commit}</span>. ${esc(f.change.text)}</span></div>`;
+  else if (f.change) callout = `<div class="callout slate">${ic("bolt")}<span>Agent change in <span class="mono">${f.change.commit}</span>, ${f.change.when}. ${esc(f.change.text)}</span></div>`;
+  if (f.stale) callout += `<div class="callout slate">${ic("clock")}<span>${esc(f.stale)}</span></div>`;
+  const canExam = f.id === "webhook" && S.push !== "allowed";
+  return `<div class="detail">
+    <div class="hd"><h2>${esc(f.path)}</h2><button class="btn ghost sm" id="closeDetail" aria-label="Close details">${ic("x")}</button></div>
+    ${callout}
+    <dl class="kv">
+      <dt>Symbols</dt><dd class="syms">${f.sym.map(s => `<span class="sym">${esc(s)}</span>`).join("")}</dd>
+      <dt>Module</dt><dd>${MODULES.find(m => m.id === f.m).label}</dd>
+      <dt>Last review</dt><dd>${f.last ? `${PEOPLE[f.last.p].short}, ${fmtDate(f.last.d)} (${ago(f.last.d)})` : "Never reviewed"}</dd>
+      <dt>Changed since</dt><dd>${f.change ? `Yes, <span class="mono">${f.change.commit}</span> ${f.change.when}` : "No"}</dd>
+      <dt>Understood by</dt><dd><div class="people-list">${people.length ? people.map(([p, l, c]) => `<div>${av(p, 20)}<span>${PEOPLE[p].short}</span><span class="pill ${c}" style="margin-left:auto">${l}</span></div>`).join("") : `<span class="t-muted">No one has demonstrated understanding yet.</span>`}</div></dd>
+    </dl>
+    ${cp.length === 1 ? `<p class="t-muted" style="font-size:12.5px">Only one person has explained this so far. A second review would spread the knowledge.</p>` : ""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${canExam ? `<a class="btn primary" href="#exam">${ic("mic")}Review this change</a>` : `<button class="btn" data-queue="${f.id}">${ic("mic")}Review this change</button>`}
+      <a class="btn ghost" href="#ledger" data-ledger-file="${f.id}">See in ledger</a>
+    </div></div>`;
+}
+
+/* ----- fog canvas ----- */
+let fogRAF = 0, fogCtx = null, fogRects = [], puffs = [], clarity = {}, fogT = 0, fogDirty = true;
+function seedPuffs() {
+  let s = 7; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  puffs = Array.from({ length: 46 }, () => ({ x: rnd(), y: rnd(), r: 90 + rnd() * 170, a: .07 + rnd() * .08, vx: (rnd() - .5) * .006, vy: (rnd() - .5) * .004, ph: rnd() * 6.28 }));
+}
+seedPuffs();
+function target(f) { const st = fstate(f); return st === "clear" ? 1 : st === "stale" ? .5 : 0; }
+FILES.forEach(f => { clarity[f.id] = target(f); });
+function measureFog() {
+  const stage = $("#stage"), cv = $("#fog"); if (!stage || !cv) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = stage.clientWidth, h = stage.clientHeight;
+  cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px";
+  fogCtx = cv.getContext("2d"); fogCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sr = stage.getBoundingClientRect();
+  fogRects = $$(".node", stage).map(n => { const r = n.getBoundingClientRect(); return { id: n.dataset.id, x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height }; });
+  fogDirty = true;
+}
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function drawFog() {
+  const ctx = fogCtx, cv = $("#fog"); if (!ctx || !cv) return;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  ctx.globalCompositeOperation = "source-over"; ctx.shadowBlur = 0; ctx.clearRect(0, 0, W, H);
+  if (!S.fogOn) return;
+  for (const p of puffs) {
+    const x = ((p.x + p.vx * fogT) % 1 + 1) % 1 * W, y = ((p.y + p.vy * fogT) % 1 + 1) % 1 * H;
+    const a = p.a * (0.8 + 0.2 * Math.sin(fogT * .5 + p.ph));
+    const g = ctx.createRadialGradient(x, y, 0, x, y, p.r);
+    g.addColorStop(0, `rgba(168,180,196,${a})`); g.addColorStop(1, "rgba(168,180,196,0)");
+    ctx.fillStyle = g; ctx.fillRect(x - p.r, y - p.r, p.r * 2, p.r * 2);
+  }
+  for (const r of fogRects) {
+    const c = clarity[r.id] ?? 0; if (c >= .99) continue;
+    ctx.shadowColor = `rgba(168,180,196,${.34 * (1 - c)})`; ctx.shadowBlur = 22;
+    ctx.fillStyle = `rgba(168,180,196,${.34 * (1 - c)})`;
+    rr(ctx, r.x + 2, r.y + 2, r.w - 4, r.h - 4, 8); ctx.fill();
+  }
+  ctx.globalCompositeOperation = "destination-out";
+  for (const r of fogRects) {
+    const c = clarity[r.id] ?? 0; if (c <= .01) continue;
+    ctx.shadowColor = `rgba(0,0,0,${c})`; ctx.shadowBlur = 16; ctx.fillStyle = `rgba(0,0,0,${c})`;
+    rr(ctx, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 9); ctx.fill();
+  }
+  ctx.globalCompositeOperation = "source-over"; ctx.shadowBlur = 0;
+}
+let fogLast = 0;
+function fogLoop(ts) {
+  const dt = Math.min(64, ts - (fogLast || ts)); fogLast = ts;
+  let moving = false;
+  for (const f of FILES) {
+    const t = target(f), c = clarity[f.id] ?? 0;
+    if (Math.abs(t - c) > .002) {
+      const rate = t > c ? .00055 : .00022; // clears faster than it returns
+      clarity[f.id] = reduce ? t : c + Math.sign(t - c) * Math.min(Math.abs(t - c), rate * dt);
+      moving = true;
+    }
+  }
+  if (!reduce) fogT += dt / 1000;
+  if (!reduce || moving || fogDirty) { drawFog(); fogDirty = false; }
+  fogRAF = requestAnimationFrame(fogLoop);
+}
+let fogRO = null;
+function startFog() {
+  measureFog(); fogLast = 0; cancelAnimationFrame(fogRAF); fogRAF = requestAnimationFrame(fogLoop);
+  const stage = $("#stage");
+  if (stage && "ResizeObserver" in window) { fogRO && fogRO.disconnect(); fogRO = new ResizeObserver(() => measureFog()); fogRO.observe(stage); }
+}
+function stopFog() { cancelAnimationFrame(fogRAF); fogRAF = 0; fogRO && fogRO.disconnect(); fogRO = null; }
+
+function mountMap() {
+  if (!S.mapLoaded) { setTimeout(() => { S.mapLoaded = true; if (S.view === "map") render(false); }, 750); return; }
+  startFog();
+  if (S.sel) { const n = $(`.node[data-id="${S.sel}"]`); n && n.scrollIntoView({ block: "nearest" }); }
+}
+function refreshMap(keepFocusId) {
+  const main = $("#main"), st = main.scrollTop;
+  const active = document.activeElement && document.activeElement.id;
+  render(false); main.scrollTop = st;
+  if (keepFocusId) { const n = $(`.node[data-id="${keepFocusId}"]`); n && n.focus({ preventScroll: true }); }
+  else if (active === "mapSearch") { const i = $("#mapSearch"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+
+/* ================= exam ================= */
+function codeFile() { const r = E().round; return (CODE[r][E().file] || CODE[r].webhook); }
+function hl(t) {
+  const re = /(\/\/.*$|--.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(import|type|from|export|async|function|const|let|return|await|if|try|catch|for|throw|of|new|ALTER|TABLE|ADD|COLUMN|NOT|NULL|DEFAULT|integer)\b|\b(\d+)\b|\b([a-zA-Z_]\w*)(?=\()/g;
+  let out = "", i = 0, m;
+  while ((m = re.exec(t))) {
+    out += esc(t.slice(i, m.index));
+    const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "k" : m[4] ? "n" : "f";
+    out += `<span class="tok-${cls}">${esc(m[0])}</span>`; i = re.lastIndex;
+  }
+  return out + esc(t.slice(i));
+}
+function codeHTML() {
+  const cf = codeFile(); let prevG = null;
+  return cf.lines.map((l, idx) => {
+    const first = l.g && l.g !== prevG; prevG = l.g;
+    const cls = ["ln", l.d === "+" ? "add" : l.d === "-" ? "del" : "", l.o || "", l.g ? "grp" : "", l.g && E().group === l.g ? "sel" : ""].join(" ");
+    const btn = first ? `<button data-group="${l.g}" aria-label="${ORIGIN[l.o].l} change: ${esc(GROUPS[l.g].title)}. Show evidence" title="${ORIGIN[l.o].l}: show evidence"><span class="olet ${l.o}">${l.o}</span></button>` : "";
+    return `<div class="${cls}" data-n="${l.n ?? ""}" data-g="${l.g ?? ""}" data-i="${idx}"><span class="ob2"></span><span class="ogrp">${btn}</span><span class="n">${l.n ?? ""}</span><span class="sgn">${l.d === "+" ? "+" : l.d === "-" ? "−" : ""}</span><span class="tx">${hl(l.t) || " "}</span></div>`;
+  }).join("");
+}
+function originCounts(r) {
+  const gs = new Set(); Object.values(CODE[r]).forEach(f => f.lines.forEach(l => l.g && gs.add(l.g)));
+  const c = { R: 0, I: 0, S: 0 }; gs.forEach(g => c[GROUPS[g].o]++); return c;
+}
+function evidenceHTML() {
+  const g = E().group;
+  if (!g) return `<div class="ev-hint">${ic("info")}Select a marked change (<span class="olet R">R</span> <span class="olet I">I</span> <span class="olet S">S</span>) to see why it was classified that way.</div>`;
+  const G = GROUPS[g], O = ORIGIN[G.o];
+  return `<div class="hd"><span class="olet ${G.o}">${G.o}</span><h3>${esc(G.title)}</h3><button class="btn ghost sm" id="evClose" aria-label="Close evidence">${ic("x")}</button></div>
+    <dl class="ev-list">
+      <dt>Classified</dt><dd><b style="color:var(--fg)">${O.l}</b>. ${O.d} Confidence: ${G.conf}.</dd>
+      <dt>Lines</dt><dd class="mono">${G.lines}</dd>
+      <dt>Request</dt><dd><blockquote>${esc(G.req)}</blockquote></dd>
+      <dt>Agent said</dt><dd>${esc(G.agent)}</dd>
+      <dt>Signals</dt><dd><ul class="signals">${G.signals.map(([i, t]) => `<li>${ic(i, i === "alert" ? "t-amber" : i === "check" ? "t-teal" : "t-muted")}<span>${esc(t)}</span></li>`).join("")}</ul></dd>
+    </dl>`;
+}
+function examHeader() {
+  const e = E(), R = ROUNDS[e.round];
+  const qn = e.phase === "result" ? 3 : Math.min(e.qi + 1, 3);
+  return `<header class="exam-head">
+    <div><span class="eyebrow">${e.round === 2 ? "Second review · after fix" : "Viva exam"}</span><h1>Review before push</h1></div>
+    <div class="meta"><span class="mono">${ic("ledger")}ledgerline/payments-api</span><span class="mono">${ic("branch")}feat/webhook-retries</span><span class="mono">${ic("commit")}${R.commit}</span></div>
+    <div class="right"><span class="pill" id="qCount">Question ${qn} of 3</span><span class="pill">${ic("clock")}About 90 seconds</span><span id="pushPill">${pushPill()}</span></div>
+  </header>`;
+}
+function viewExam() {
+  const e = E();
+  if (e.phase === "result" && e.resultView === "summary") return `<section class="exam" aria-label="Review result">${examHeader()}<div class="result" id="result">${resultHTML()}</div></section>`;
+  const R = ROUNDS[e.round], oc = originCounts(e.round);
+  const files = Object.entries(CODE[e.round]);
+  return `<section class="exam">${examHeader()}
+    <div class="mtabs"><div class="seg" role="tablist" aria-label="Exam panels"><button role="tab" data-mtab="q" aria-pressed="${e.tab === "q"}" aria-selected="${e.tab === "q"}">Question</button><button role="tab" data-mtab="code" aria-pressed="${e.tab === "code"}" aria-selected="${e.tab === "code"}">Code ${e.focus ? `· L${e.focus[0]}` : ""}</button></div></div>
+    <div class="split" data-tab="${e.tab}">
+      <div class="pane pane-code" aria-label="Code under review">
+        <div class="card req"><div><span class="eyebrow">Original request</span><div style="margin-top:4px"><q>${esc(R.request)}</q></div><div class="by">${esc(R.by)}</div></div>
+          <div class="origins" aria-label="Change origins">
+            <span class="ob" title="${ORIGIN.R.d}"><span class="olet R">R</span>Requested <b>${oc.R}</b></span>
+            <span class="ob" title="${ORIGIN.I.d}"><span class="olet I">I</span>Inferred <b>${oc.I}</b></span>
+            <span class="ob" title="${ORIGIN.S.d}" style="${oc.S ? "border-color:var(--amber-line)" : ""}"><span class="olet S">S</span>Silent <b>${oc.S}</b></span>
+          </div></div>
+        <div class="codebox">
+          <div class="ftabs" role="tablist" aria-label="Changed files">${files.map(([k, f]) => {
+            const os = [...new Set(f.lines.filter(l => l.o).map(l => l.o))];
+            return `<button class="ftab" role="tab" data-file="${k}" aria-selected="${e.file === k}">${esc(f.path)}<span class="cnt" aria-hidden="true">${os.map(o => `<i style="background:${o === "R" ? "var(--blue)" : o === "S" ? "var(--amber)" : "var(--slate)"}"></i>`).join("")}</span></button>`;
+          }).join("")}</div>
+          <div class="code-note" id="codeNote"></div>
+          <div class="code" id="code" role="region" aria-label="${esc(codeFile().path)} diff" tabindex="0">${codeHTML()}</div>
+        </div>
+        <div class="evidence" id="evidence" aria-live="polite">${evidenceHTML()}</div>
+      </div>
+      <div class="pane pane-q" id="paneQ" aria-label="Examiner"></div>
+    </div></section>`;
+}
+function codeNoteHTML() {
+  const e = E();
+  const legend = `<span style="display:inline-flex;gap:10px;align-items:center;color:var(--muted)"><span><span style="color:var(--add-fg)">+</span> added</span><span><span style="color:var(--del-fg)">−</span> removed</span></span>`;
+  if (e.focus && (e.file === "webhook")) return `${ic("eye")}<span>Examiner is asking about <b class="mono">${e.focus[0] === e.focus[1] ? "line " + e.focus[0] : "lines " + e.focus[0] + "–" + e.focus[1]}</b></span> <button id="jumpFocus">Show</button><span class="sim" style="margin-left:auto">${legend}</span>`;
+  if (e.focus) return `${ic("eye")}<span>Examiner is asking about <b class="mono">src/webhook.ts</b></span> <button data-file-jump="webhook">Open it</button>`;
+  return `${legend}<span class="sim">Click a marker to see evidence</span>`;
+}
+function mountExam() {
+  const e = E();
+  if (e.phase === "result" && e.resultView === "summary") { return; }
+  $("#codeNote").innerHTML = codeNoteHTML();
+  renderQ();
+  applyFocus(false);
+}
+function refreshExamBits() { if (S.view === "exam" && E().phase !== "result") renderQ(); if (S.view === "exam" && E().phase === "result" && E().resultView === "summary") { const r = $("#result"); if (r) r.innerHTML = resultHTML(); } }
+
+function applyFocus(scroll = true) {
+  const e = E(); const code = $("#code"); if (!code) return;
+  $$(".ln.focus", code).forEach(n => n.classList.remove("focus", "fs", "fe", "pulse"));
+  $("#codeNote") && ($("#codeNote").innerHTML = codeNoteHTML());
+  if (!e.focus || e.file !== "webhook") return;
+  const [a, b] = e.focus;
+  const ls = $$(".ln", code).filter(n => { const k = +n.dataset.n; return n.dataset.n !== "" && k >= a && k <= b; });
+  ls.forEach((n, i) => { n.classList.add("focus"); if (i === 0) n.classList.add("fs"); if (i === ls.length - 1) n.classList.add("fe"); if (!reduce) n.classList.add("pulse"); });
+  if (scroll && ls[0]) {
+    const top = ls[0].offsetTop - code.clientHeight / 2 + (ls.length * 21) / 2;
+    code.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+  } else if (ls[0]) code.scrollTop = Math.max(0, ls[0].offsetTop - code.clientHeight / 2);
+}
+function setFocus(lines) {
+  const e = E(); e.focus = lines;
+  if (lines && e.file !== "webhook") { e.file = "webhook"; rerenderCode(); }
+  applyFocus(true);
+  const t = $('[data-mtab="code"]'); if (t) t.textContent = "Code" + (lines ? " · L" + lines[0] : "");
+}
+function rerenderCode() {
+  const code = $("#code"); if (!code) return;
+  code.innerHTML = codeHTML(); code.setAttribute("aria-label", codeFile().path + " diff");
+  $$(".ftab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.file === E().file)));
+  applyFocus(false);
+}
+function selectGroup(g) {
+  const e = E(); e.group = e.group === g ? null : g;
+  $$(".ln", $("#code")).forEach(n => n.classList.toggle("sel", !!e.group && n.dataset.g === e.group));
+  $("#evidence").innerHTML = evidenceHTML();
+}
+
+/* ----- right pane ----- */
+const PHASE_LABEL = { ready: "Ready", speaking: "Speaking", listening: "Listening", thinking: "Thinking", reviewing: "Reviewing" };
+function stateChip(p) { return `<span class="state" data-s="${p}" id="stateChip" role="status" aria-live="polite"><span class="sd" aria-hidden="true"></span>${PHASE_LABEL[p] || "Ready"}${p === "ready" && E().started ? " · your turn" : ""}</span>`; }
+function waveHTML(p) { return `<div class="wave" id="wave" data-mode="${p}" aria-hidden="true">${"<i></i>".repeat(34)}</div>`; }
+function connBanner() {
+  if (S.conn === "ok") return "";
+  if (S.conn === "retrying") return `<div class="banner amber">${ic("refresh")}<span>Reconnecting to the local Viva service…</span></div>`;
+  return `<div class="banner red" role="alert">${ic("wifiOff")}<span><b>Can't reach the local Viva service.</b> Voice is paused. Anything you type is kept and sends when you're back.</span><button class="btn sm" data-retry-conn>Retry</button></div>`;
+}
+function renderQ() {
+  const pane = $("#paneQ"); if (!pane) return;
+  const e = E();
+  if (e.phase === "result") {
+    const title = { problem: "Potential double charge identified", verified: "Understanding verified", skipped: "Push allowed with understanding debt" }[e.result];
+    pane.innerHTML = `<div class="intro"><span class="eyebrow">Review finished</span><h2>${title}</h2>
+      <p class="t-muted">The code is open on the left with lines 38–44 highlighted. Select a marker to see why each change was classified as it was.</p>
+      <div>${pushPill()}</div>
+      <div class="row"><button class="btn primary" id="backToResult">${ic("back")}Back to result</button></div></div>`;
+    return;
+  }
+  const prevTA = $("#answer"); const hadFocus = prevTA && document.activeElement === prevTA;
+  if (prevTA) e.draft = prevTA.value;
+  const wavePhase = e.phase === "intro" || e.phase === "perm" ? "ready" : e.phase;
+  let body = "";
+  if (e.phase === "intro") {
+    const R = ROUNDS[e.round];
+    body = `<div class="intro">
+      <span class="eyebrow">${e.round === 1 ? "Before you push" : "The agent's fix is ready"}</span>
+      <h2>${e.round === 1 ? "Three short questions about the change the agent made in <span class=\"mono\">src/webhook.ts</span>." : "Three questions on the fix in <span class=\"mono\">c81d4e7</span>, so the fog can clear."}</h2>
+      <ul>
+        <li>${ic("clock")}<span>About 90 seconds. One question at a time.</span></li>
+        <li>${ic("mic")}<span>Answer out loud or by typing. You can switch at any point.</span></li>
+        <li>${ic("shield")}<span>Answers are judged on what you mean. Accent, fluency and pauses don't count.</span></li>
+        <li>${ic("code")}<span>The code on the left scrolls to whatever the examiner is asking about.</span></li>
+      </ul>
+      ${connBanner()}
+      ${S.mic === "denied" ? `<div class="banner amber">${ic("micOff")}<span>Your browser is blocking the microphone. Typed answers work the same way.</span></div>` : ""}
+      <div class="row">
+        <button class="btn primary" id="startVoice" ${S.conn !== "ok" || S.mic === "denied" ? "disabled" : ""}>${ic("mic")}Start with voice</button>
+        <button class="btn" id="startTyped">${ic("keyboard")}Answer by typing</button>
+      </div>
+      <p class="t-muted" style="font-size:12px">${R.commit === "a3f9c21" ? "Voice and the examiner are simulated in this demo." : "Simulated examiner. Your previous answers are in the ledger."}</p>
+    </div>`;
+  } else if (e.phase === "perm") {
+    body = `<div class="perm" role="dialog" aria-labelledby="permH" aria-describedby="permP">
+      <span class="sim">${ic("mic")}Simulated permission prompt</span>
+      <h2 id="permH">Viva needs your microphone</h2>
+      <p id="permP">Audio is turned into text on this machine and then discarded. Only the transcript is saved to the ledger, and you can edit it before it's sent anywhere.</p>
+      <div class="intro"><div class="row"><button class="btn primary" id="permAllow">${ic("mic")}Allow microphone</button><button class="btn" id="permDeny">Not now, I'll type</button></div></div>
+    </div>`;
+  } else {
+    body = examLiveHTML();
+  }
+  pane.innerHTML = `<div class="voice">${waveHTML(wavePhase)}${stateChip(wavePhase)}</div>${body}${skipHTML()}`;
+  const ta = $("#answer"); if (ta) { ta.value = e.draft || ""; if (hadFocus) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+  const tr = $("#transcript"); if (tr) tr.scrollTop = tr.scrollHeight;
+  startWave();
+}
+function currentQ() { const e = E(); return ROUNDS[e.round].questions[Math.min(e.qi, 2)]; }
+function examLiveHTML() {
+  const e = E(), q = currentQ();
+  const qtext = e.follow ? q.follow.text : q.text;
+  const lines = e.follow ? q.follow.lines : q.lines;
+  const awaiting = e.phase === "ready";
+  const micDisabled = S.conn !== "ok" || S.mic === "denied" || !(awaiting || e.phase === "listening");
+  return `${connBanner()}
+    <div class="qblock" aria-live="polite">
+      <div class="row"><span class="eyebrow">Question ${e.qi + 1} of 3${e.follow ? " · follow-up" : ""}</span>
+        <button class="lines-btn" data-lines="${lines.join("-")}">${ic("code")}${lines[0] === lines[1] ? "line " + lines[0] : "lines " + lines[0] + "–" + lines[1]}</button></div>
+      <p class="question ${e.follow ? "fu" : ""}" id="qText">${esc(qtext)}</p>
+    </div>
+    <div class="transcript" id="transcript" aria-label="Transcript" aria-live="off">${e.transcript.map(tlHTML).join("")}</div>
+    <div class="controls">
+      ${e.mode === "voice" ? `<div class="ctl-row">
+        <button class="mic" id="micBtn" aria-pressed="${e.phase === "listening"}" ${micDisabled ? "disabled" : ""} aria-label="${e.phase === "listening" ? "Stop and send answer" : "Answer out loud"}">${ic(e.phase === "listening" ? "check" : S.mic === "denied" ? "micOff" : "mic")}</button>
+        <div class="mic-label"><b>${e.phase === "listening" ? "Listening… tap to finish" : awaiting ? "Tap to answer out loud" : e.phase === "speaking" ? "Examiner is speaking" : "One moment"}</b><small>${S.mic === "denied" ? "Microphone blocked. Type your answer instead." : "Simulated voice: your answer is scripted for this demo"}</small></div>
+        <button class="iconbtn" id="muteBtn" aria-pressed="${e.muted}" aria-label="${e.muted ? "Unmute examiner voice" : "Mute examiner voice"}" title="${e.muted ? "Unmute" : "Mute"} examiner">${ic(e.muted ? "volOff" : "vol")}</button>
+        <button class="iconbtn" id="typeBtn" aria-pressed="false" aria-label="Type instead" title="Type instead">${ic("keyboard")}</button>
+      </div>` : `<div class="typed">
+        <label class="sr" for="answer">Your answer</label>
+        <textarea id="answer" placeholder="Type your answer. Plain words are fine." ${S.conn === "retrying" ? "" : ""}></textarea>
+        <div class="row"><span class="hint">${navigator.platform && /Mac/.test(navigator.platform) ? "⌘" : "Ctrl"}+Enter to send</span>
+          <button class="btn ghost sm" id="sampleBtn" ${awaiting ? "" : "disabled"} title="Fills in a scripted answer for the demo">Use sample answer</button>
+          <button class="iconbtn" id="muteBtn" aria-pressed="${e.muted}" aria-label="${e.muted ? "Unmute examiner voice" : "Mute examiner voice"}">${ic(e.muted ? "volOff" : "vol")}</button>
+          <button class="btn sm" id="voiceBtn" ${S.mic === "denied" || S.conn !== "ok" ? "disabled" : ""}>${ic("mic")}Use voice</button>
+          <button class="btn primary sm" id="sendBtn" ${awaiting && S.conn === "ok" ? "" : "disabled"}>${ic("send")}Send</button></div>
+      </div>`}
+      <p class="fair">${ic("shield")}<span>Take your time. You're assessed on what you mean, not accent, fluency or hesitation.</span></p>
+    </div>`;
+}
+function tlHTML(t) {
+  const who = t.who === "examiner" ? "Examiner" : t.who === "sys" ? "Viva" : "You";
+  return `<div class="tl ${t.who === "you" ? "you" : ""} ${t.who === "sys" ? "sys" : ""} ${t.live ? "live" : ""} ${t.interim ? "interim" : ""}"><span class="spk">${who}${t.via ? `<span class="via">${t.via}</span>` : ""}</span><span class="txt">${esc(t.text)}</span></div>`;
+}
+function skipHTML() {
+  const e = E();
+  if (e.phase === "result") return "";
+  if (e.skipConfirm) return `<div class="skip confirm" role="alertdialog" aria-labelledby="skipH"><b id="skipH">Push now and record understanding debt?</b>
+    <span>The push goes ahead. The gap in understanding for <span class="mono">processPayment</span> is recorded in the ledger, and the fog stays on the map until someone reviews it.</span>
+    <div class="row"><button class="btn sm" id="skipCancel">Keep reviewing</button><button class="btn sm" id="skipYes" style="border-color:var(--amber-line);color:var(--amber)">${ic("debt")}Skip with debt</button></div></div>`;
+  return `<div class="skip"><span>Need to ship now? The push proceeds and the open gap is recorded as debt.</span><button class="btn ghost sm" id="skipBtn">Skip with debt</button></div>`;
+}
+function setPhase(p) {
+  const e = E(); e.phase = p;
+  const chip = $("#stateChip"); if (chip) chip.outerHTML = stateChip(p);
+  const w = $("#wave"); if (w) w.dataset.mode = p;
+  // refresh controls without losing the draft
+  const ctl = $("#paneQ .controls");
+  if (ctl) {
+    const ta = $("#answer"); const had = ta && document.activeElement === ta; if (ta) e.draft = ta.value;
+    const tmp = document.createElement("div"); tmp.innerHTML = examLiveHTML();
+    ctl.replaceWith($(".controls", tmp));
+    const nta = $("#answer"); if (nta) { nta.value = e.draft || ""; if (had) nta.focus(); }
+  }
+  $("#qCount") && ($("#qCount").textContent = `Question ${Math.min(e.qi + 1, 3)} of 3`);
+}
+function setQuestionText() {
+  const e = E(), q = currentQ(); const qt = $("#qText"); if (!qt) return;
+  const qb = $(".qblock"); const tmp = document.createElement("div"); tmp.innerHTML = examLiveHTML();
+  qb.replaceWith($(".qblock", tmp));
+  $("#qCount") && ($("#qCount").textContent = `Question ${e.qi + 1} of 3`);
+}
+function addLine(t) {
+  E().transcript.push(t);
+  const idx = E().transcript.length - 1;
+  const tr = $("#transcript"); if (!tr) return idx;
+  tr.insertAdjacentHTML("beforeend", tlHTML(t)); tr.scrollTop = tr.scrollHeight;
+  return idx;
+}
+function updateLine(idx, t) { const tr = $("#transcript"); const el = tr && tr.children[idx]; if (!el) return; el.className = `tl ${t.who === "you" ? "you" : ""} ${t.who === "sys" ? "sys" : ""} ${t.live ? "live" : ""} ${t.interim ? "interim" : ""}`; $(".txt", el).textContent = t.text; tr.scrollTop = tr.scrollHeight; }
+
+/* ----- waveform ----- */
+let waveRAF = 0;
+function startWave() {
+  cancelAnimationFrame(waveRAF);
+  const bars = $$("#wave i"); if (!bars.length) return;
+  const amp = new Array(bars.length).fill(.06);
+  let t = 0;
+  const loop = () => {
+    const w = $("#wave"); if (!w) return;
+    const mode = w.dataset.mode; t += .06;
+    bars.forEach((b, i) => {
+      let v = .06;
+      if (reduce) v = mode === "speaking" ? .35 + .25 * Math.sin(i * .7) : mode === "listening" ? .4 + .3 * Math.cos(i * 1.3) : .08;
+      else if (mode === "speaking") v = .18 + .55 * Math.abs(Math.sin(t * 1.7 + i * .45)) * (.55 + .45 * Math.sin(t * .9 + i * .13));
+      else if (mode === "listening") v = Math.max(.08, amp[i] * .6 + Math.random() * .7 * .4 + (Math.random() < .08 ? .4 : 0));
+      else if (mode === "thinking" || mode === "reviewing") v = .08 + .3 * Math.max(0, Math.sin(t * 2 - i * .35)) ** 6;
+      else v = .06 + .03 * Math.sin(t + i * .5);
+      amp[i] = v; b.style.transform = `scaleY(${Math.min(1, v).toFixed(3)})`;
+    });
+    if (!reduce || mode) waveRAF = requestAnimationFrame(loop);
+  };
+  waveRAF = requestAnimationFrame(loop);
+}
+
+/* ----- speech (examiner voice, browser synthesis) ----- */
+function speak(text) {
+  try { if (E().muted || !("speechSynthesis" in window)) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; u.pitch = 1; speechSynthesis.speak(u); } catch (e) {}
+}
+function hush() { try { "speechSynthesis" in window && speechSynthesis.cancel(); } catch (e) {} }
+
+/* ----- flow ----- */
+async function examinerSay(text, lines) {
+  const tok = FLOW; setPhase("speaking"); if (lines) setFocus(lines);
+  const t = { who: "examiner", text: "", live: true }; const el = addLine(t);
+  speak(text);
+  const words = text.split(" ");
+  for (let i = 0; i < words.length; i++) {
+    if (tok !== FLOW) return false;
+    t.text = words.slice(0, i + 1).join(" "); updateLine(el, t);
+    await sleep(reduce ? 0 : 55 + Math.random() * 40);
+  }
+  t.live = false; updateLine(el, t); await sleep(250);
+  return tok === FLOW;
+}
+async function askCurrent() {
+  const e = E(), q = currentQ();
+  setQuestionText();
+  const ok = await examinerSay(e.follow ? q.follow.text : q.text, e.follow ? q.follow.lines : q.lines);
+  if (ok) setPhase("ready");
+}
+async function beginExam(mode) {
+  const e = E(); FLOW++; e.mode = mode; e.started = true; e.phase = "speaking"; e.transcript = [];
+  e.transcript.push({ who: "sys", text: e.round === 1 ? "Review started for commit a3f9c21. Simulated examiner." : "Second review for commit c81d4e7. Simulated examiner." });
+  renderQ();
+  await askCurrent();
+}
+async function submitAnswer(text, via) {
+  const e = E(); if (e.phase !== "ready" && e.phase !== "listening") return;
+  text = text.trim(); if (!text) { toast("info", "Type an answer first, even a rough one."); return; }
+  if (S.conn !== "ok") { toast("wifiOff", "Not connected. Your answer is kept. Retry when ready."); return; }
+  const tok = FLOW;
+  if (via === "typed") { addLine({ who: "you", text, via: "typed" }); e.draft = ""; const ta = $("#answer"); if (ta) ta.value = ""; }
+  e.answers.push({ q: e.qi, follow: e.follow, text });
+  setPhase("thinking"); await sleep(1100); if (tok !== FLOW) return;
+  await evaluate(text, tok);
+}
+async function evaluate(text, tok) {
+  const e = E(), q = currentQ();
+  if (e.round === 1 && e.qi === 0) {
+    if (BUG_RE.test(text)) {
+      e.identified = true;
+      if (!await examinerSay("Yes. The charge on line 38 runs before anything checks the key, so a retry charges the card a second time. That's a real problem, and the agent made that change without being asked. Two more short questions.", [38, 44])) return;
+    } else if (!e.follow) {
+      e.follow = true; setQuestionText();
+      if (!await examinerSay(q.follow.text, q.follow.lines)) return;
+      setPhase("ready"); return;
+    } else {
+      e.guided = true;
+      if (!await examinerSay("Thanks for working through it. Here's the order: line 38 charges the card. If that call times out before line 44 records the key, the retry runs line 38 again before line 41 ever checks. The card is charged twice. Let's keep going.", [38, 44])) return;
+    }
+  } else if (e.round === 2 && e.qi === 0) {
+    if (!FIX_RE.test(text) && !e.follow) {
+      e.follow = true; setQuestionText();
+      if (!await examinerSay(q.follow.text, q.follow.lines)) return;
+      setPhase("ready"); return;
+    }
+    if (!await examinerSay("Right. The provider sees the same key and returns the first charge, so the customer pays once.", [41, 43])) return;
+  } else {
+    if (!await examinerSay(q.ack || "Thanks. That matches the code.")) return;
+  }
+  if (tok !== FLOW) return;
+  e.follow = false; e.qi++;
+  if (e.qi >= 3) { e.qi = 2; return finish(tok); }
+  await askCurrent();
+}
+async function finish(tok) {
+  const e = E(); setPhase("reviewing");
+  addLine({ who: "sys", text: "Reviewing your answers against the change…" });
+  await sleep(1700); if (tok !== FLOW) return;
+  hush();
+  if (e.round === 1) applyResult("problem"); else applyResult("verified");
+}
+function applyResult(kind) {
+  const e = E(); e.result = kind; e.phase = "result"; e.resultView = "summary"; e.skipConfirm = false; FLOW++; hush();
+  const w = F("webhook");
+  const reasoning = e.answers.filter(a => a.q === 0).map(a => a.text).slice(-1)[0] || "";
+  if (kind === "problem") {
+    S.push = "blocked"; w.problem = true; w.who.sophina = "clear"; w.last = { p: "sophina", d: "2026-11-07" };
+    ACTIVITY.unshift({ k: "red", i: "alert", h: 'You found a potential double charge in <span class="mono">processPayment</span>. Push blocked.', t: "just now", fresh: true });
+    upsertLedger({ id: "me1", p: "sophina", f: "webhook", sym: "processPayment", st: e.guided ? "partial" : "issue", d: "2026-11-07", chg: null,
+      ex: reasoning || "Traced the retry path and found the charge runs before the idempotency check.",
+      why: e.guided ? "The examiner explained the execution order after a follow-up." : null,
+      tr: e.transcript.filter(t => t.who !== "sys").map(t => [t.who === "examiner" ? "Examiner" : "Sophina", t.text]),
+      code: [37, CODE[1].webhook.lines.filter(l => l.n >= 37 && l.n <= 45).map(l => l.t)] });
+  } else if (kind === "verified") {
+    S.push = "allowed"; w.problem = false; w.change = null; w.debt = null; w.who.sophina = "clear"; w.last = { p: "sophina", d: "2026-11-07" };
+    F("idem").who.sophina = "clear"; F("retry").who.sophina = "clear"; F("retry").change = null; F("retry").last = { p: "sophina", d: "2026-11-07" };
+    ACTIVITY.unshift({ k: "teal", i: "check", h: 'You demonstrated understanding of <span class="mono">processPayment</span> after the fix. Push allowed.', t: "just now", fresh: true });
+    upsertLedger({ id: "me1", p: "sophina", f: "webhook", sym: "processPayment", st: "ok", d: "2026-11-07", chg: null,
+      ex: e.answers.filter(a => a.q === 0).map(a => a.text).slice(-1)[0] || "Explained why the provider key makes a retry safe.",
+      tr: e.transcript.filter(t => t.who !== "sys").map(t => [t.who === "examiner" ? "Examiner" : "Sophina", t.text]),
+      code: [37, CODE[2].webhook.lines.filter(l => l.n >= 37 && l.n <= 46).map(l => l.t)] });
+  } else {
+    S.push = "debt"; S.debt = true; w.debt = { p: "sophina", d: "2026-11-07" };
+    ACTIVITY.unshift({ k: "amber", i: "debt", h: 'You pushed <span class="mono">' + ROUNDS[e.round].commit + '</span> with understanding debt on <span class="mono">processPayment</span>.', t: "just now", fresh: true });
+    upsertLedger({ id: "me1", p: "sophina", f: "webhook", sym: "processPayment", st: "debt", d: "2026-11-07", chg: null,
+      ex: "Skipped with debt before the review finished.", why: "Review was skipped. The push went ahead and this gap stays open until someone reviews it.",
+      tr: [["Viva", "Review skipped by Sophina."]].concat(e.transcript.filter(t => t.who !== "sys").map(t => [t.who === "examiner" ? "Examiner" : "Sophina", t.text])),
+      code: [37, codeFile().lines.filter(l => l.n >= 37 && l.n <= 45).map(l => l.t)] });
+  }
+  S.ledgerSel = "me1";
+  renderNav(); render(false);
+  const h = $(".verdict h2"); if (h) { h.setAttribute("tabindex", "-1"); h.focus(); }
+}
+function upsertLedger(r) { const i = LEDGER.findIndex(x => x.id === r.id); if (i >= 0) LEDGER.splice(i, 1); LEDGER.unshift(r); }
+
+/* ----- voice answer (simulated) ----- */
+let micTimer = null, micState = null;
+async function startListening() {
+  const e = E(); if (e.phase !== "ready") return;
+  if (S.mic === "prompt") { e.phase = "perm"; e.pendingVoice = true; renderQ(); return; }
+  if (S.mic === "denied") { e.mode = "typed"; renderQ(); toast("micOff", "Microphone blocked. Switched to typing."); return; }
+  const tok = FLOW; setPhase("listening");
+  const q = currentQ(); const sample = e.follow ? q.sampleFollow || q.sample : q.sample;
+  const t = { who: "you", text: "", interim: true, via: "voice · simulated" }; const el = addLine(t);
+  micState = { t, el, tok };
+  const words = sample.split(" ");
+  for (let i = 0; i < words.length; i++) {
+    if (tok !== FLOW || E().phase !== "listening" || micState === null) return;
+    t.text = words.slice(0, i + 1).join(" "); updateLine(el, t);
+    await sleep(reduce ? 15 : 120 + Math.random() * 120 + (/[,.…]$/.test(words[i]) ? 260 : 0));
+  }
+  if (tok !== FLOW || E().phase !== "listening") return;
+  await sleep(600);
+  stopListening();
+}
+function stopListening() {
+  if (!micState || E().phase !== "listening") return;
+  const { t, el } = micState; micState = null;
+  t.interim = false; updateLine(el, t);
+  submitAnswer(t.text || "", "voice");
+}
+
+/* ----- results ----- */
+function resultHTML() {
+  const e = E(), k = e.result;
+  const yourAns = e.answers.filter(a => a.q === 0).map(a => a.text);
+  const fixAns = e.answers.filter(a => a.q === 2).map(a => a.text)[0];
+  if (k === "verified") {
+    return `<div class="result-in">
+      <div class="verdict"><div class="vicon teal">${ic("shieldCheck")}</div><div>
+        <h2 tabindex="-1">Understanding verified</h2>
+        <p>You explained why a retry can no longer charge twice: the key is checked first, and the provider returns the original charge for a repeated key.</p>
+        <div class="pills">${pushPill()}<span class="pill teal">${ic("check")}Understanding demonstrated</span></div></div></div>
+      ${axes("teal", "Demonstrated", "You traced the retry path through lines 38–45 and explained the provider key.", "teal", "No issues found in review", "This review checks understanding. Tests and code review still apply.", "teal", "Allowed", "Push to feat/webhook-retries can continue.")}
+      <div class="res-grid">
+        <section class="card"><h3>Map areas cleared</h3><ul class="cleared">
+          <li>${ic("check")}<span class="mono">src/webhook.ts</span><span class="t-muted">handleWebhook, processPayment</span></li>
+          <li>${ic("check")}<span class="mono">src/payments/idempotency.ts</span><span class="t-muted">checkIdempotency</span></li>
+          <li>${ic("check")}<span class="mono">src/lib/retry.ts</span><span class="t-muted">retryWithBackoff</span></li></ul>
+          <p class="t-muted" style="font-size:12.5px">Fog will return on these if the code changes again.</p></section>
+        <section class="card"><h3>What you said</h3><blockquote class="quote">${esc(yourAns.slice(-1)[0] || ROUNDS[2].questions[0].typedSample)}<cite>Sophina · question 1 · saved to the ledger</cite></blockquote></section>
+      </div>
+      <div class="actions"><button class="btn primary" id="toMap">${ic("map")}Return to map</button><a class="btn ghost" href="#ledger">Open ledger record</a></div>
+    </div>`;
+  }
+  if (k === "skipped") {
+    const hadProblem = F("webhook").problem;
+    return `<div class="result-in">
+      <div class="verdict"><div class="vicon amber">${ic("debt")}</div><div>
+        <h2 tabindex="-1">Push allowed with understanding debt</h2>
+        <p>The review was skipped, so nobody has shown they understand <span class="mono">processPayment</span> yet. The fog stays on the map and the gap is recorded in the ledger.</p>
+        <div class="pills">${pushPill()}<span class="pill amber">${ic("fog")}Fog remains</span></div></div></div>
+      ${hadProblem ? `<div class="callout red">${ic("alert")}<span><b>The double-charge risk is still in this commit.</b> Skipping records the debt. It doesn't fix the code.</span></div>` : ""}
+      ${axes("amber", "Not reviewed", "Recorded as understanding debt for Sophina on processPayment.", hadProblem ? "red" : "slate", hadProblem ? "Problem unresolved" : "Not assessed", hadProblem ? "A retry can still charge twice." : "No one has checked the silent decision yet.", "amber", "Allowed with debt", "The push went ahead.")}
+      <div class="actions"><button class="btn primary" id="reviewLater">${ic("clock")}Review later</button><button class="btn" id="reviewNow">Review now instead</button><span class="note">Review later keeps this in your queue on the map and in the ledger.</span></div>
+    </div>`;
+  }
+  // problem
+  const R1 = CODE[1].webhook.lines.filter(l => l.n >= 37 && l.n <= 45);
+  const msg = `The idempotency check in processPayment (src/webhook.ts:41) now runs after createCharge (line 38). If the charge succeeds but the request times out before recordKey (line 44), retryWithBackoff runs processPayment again and the card is charged twice.\n\nPlease:\n1. Check the idempotency key before calling createCharge.\n2. Pass key to createCharge as the provider idempotencyKey.\n\nDeveloper's reasoning:\n“${(fixAns || ROUNDS[1].questions[2].sample)}”`;
+  const agentBlock = S.agent ? agentHTML() : `<section class="card agent"><div class="hd"><h3>Message to the agent</h3><span class="sim">${ic("bolt")}Simulated agent</span></div><div class="msg">${esc(msg)}</div></section>`;
+  return `<div class="result-in">
+    <div class="verdict"><div class="vicon red">${ic("alert")}</div><div>
+      <h2 tabindex="-1">Potential double charge identified</h2>
+      <p>${e.guided ? "With a follow-up, you traced how a retry reaches the charge again before anything checks the key." : "You traced how a retry reaches the charge again before anything checks the key."} The push is blocked until the code is fixed or you skip with debt.</p>
+      <div class="pills">${pushPill()}<span class="pill red">${ic("alert")}Confirmed problem</span><span class="pill ${e.guided ? "blue" : "teal"}">${ic(e.guided ? "eye" : "check")}${e.guided ? "Partly demonstrated" : "Understanding demonstrated"}</span></div></div></div>
+    ${axes(e.guided ? "blue" : "teal", e.guided ? "Partly demonstrated" : "Demonstrated", e.guided ? "The examiner explained the execution order after one follow-up." : "You explained the execution order and the double charge yourself.", "red", "Not safe to ship", "Finding the bug shows understanding. It doesn't make the code safe.", "red", "Blocked", "Pending a fix, or skip with debt.")}
+    <div class="res-grid">
+      <section class="card"><h3>How a retry charges twice</h3>
+        <ol class="steps">
+          <li><div><b>Attempt 1 charges the card</b><br><span class="tag">line 38 · createCharge</span></div></li>
+          <li class="bad"><div><b>The request times out before the key is saved</b><br><span class="tag">line 44 never runs · recordKey</span></div></li>
+          <li><div><b>retryWithBackoff runs processPayment again</b><br><span class="tag">after 250 ms · line 27</span></div></li>
+          <li class="bad"><div><b>The card is charged a second time</b><br><span class="tag">line 38 · createCharge</span></div></li>
+          <li><div><b>Only now does the check run, too late to help</b><br><span class="tag">line 41 · checkIdempotency</span></div></li>
+        </ol></section>
+      <section class="card"><h3>Relevant code <span class="mono t-muted" style="font-weight:400;font-size:12px">src/webhook.ts</span></h3>
+        <div class="mini-code" role="region" aria-label="processPayment lines 37 to 45" tabindex="0">${R1.map(l => `<div class="${l.n === 38 || l.n === 41 ? "hot" : ""}"><span>${l.n}</span><span>${hl(l.t) || " "}</span></div>`).join("")}</div>
+        <h3 style="margin-top:4px">Your reasoning</h3>
+        <blockquote class="quote">${esc(yourAns.slice(-1)[0] || "—")}<cite>Sophina · ${e.answers.find(a => a.follow) ? "follow-up to question 1" : "question 1"}</cite></blockquote>
+      </section>
+    </div>
+    ${agentBlock}
+    <div class="actions">
+      ${!S.agent ? `<button class="btn primary" id="sendAgent">${ic("send")}Send reasoning to agent</button>` : S.agent === "ready" ? `<button class="btn primary" id="newReview">${ic("mic")}Start new review</button>` : ""}
+      <button class="btn" id="reviewCode">${ic("code")}Review code</button>
+      <button class="btn ghost" id="skipFromResult">Skip with debt</button>
+    </div>
+  </div>`;
+}
+function axes(c1, v1, d1, c2, v2, d2, c3, v3, d3) {
+  return `<div class="axes">
+    <section class="card axis"><span class="eyebrow"><span>Your understanding</span></span><b class="t-${c1 === "slate" ? "muted" : c1}">${ic(c1 === "teal" ? "check" : c1 === "blue" ? "eye" : "debt")}${v1}</b><p>${d1}</p></section>
+    <section class="card axis"><span class="eyebrow"><span>The code</span></span><b class="t-${c2 === "slate" ? "muted" : c2}">${ic(c2 === "teal" ? "shieldCheck" : c2 === "red" ? "alert" : "info")}${v2}</b><p>${d2}</p></section>
+    <section class="card axis"><span class="eyebrow"><span>Push</span></span><b class="t-${c3}">${ic(c3 === "teal" ? "unlock" : c3 === "red" ? "lock" : "debt")}${v3}</b><p>${d3}</p></section></div>`;
+}
+function agentHTML() {
+  const a = S.agent, step = { sending: 1, working: 2, ready: 4 }[a];
+  const li = (n, text) => `<li class="${step > n ? "done" : ""}">${step > n ? ic("check") : step === n ? '<span class="spin" aria-hidden="true"></span>' : ic("clock")}<span>${text}</span></li>`;
+  return `<section class="card agent" aria-live="polite"><div class="hd"><h3>Coding agent</h3><span class="sim">${ic("bolt")}Simulated agent</span>${a === "ready" ? `<span class="pill slate" style="margin-left:auto">${ic("fog")}Fog returned on src/webhook.ts</span>` : ""}</div>
+    <ol>${li(1, "Reasoning sent with lines 37–45")}${li(2, "Agent is writing a fix")}${li(3, 'Fix committed as <span class="mono">c81d4e7</span>: check the key before charging, pass it to the provider')}</ol>
+    ${a === "ready" ? `<p class="t-muted" style="font-size:12.5px">The code changed, so your earlier understanding needs a refresh. A short second review clears the fog and unblocks the push.</p>` : ""}</section>`;
+}
+async function sendToAgent() {
+  S.agent = "sending"; refreshExamBits(); await sleep(1000);
+  S.agent = "working"; refreshExamBits(); await sleep(2200);
+  S.agent = "ready"; S.fixed = true;
+  const w = F("webhook"); w.problem = false; w.who.sophina = "stale"; if (w.who.marcus) w.who.marcus = "stale";
+  w.change = { kind: "requested", text: "Agent applied your fix: check the key before charging and pass it to the provider.", when: "just now", commit: "c81d4e7" };
+  ACTIVITY.unshift({ k: "amber", i: "bolt", h: 'Agent changed <span class="mono">processPayment</span> using your reasoning. Understanding needs review.', t: "just now", fresh: true });
+  S.push = "paused"; renderNav(); refreshExamBits();
+  const hp = $("#pushPill"); if (hp) hp.innerHTML = pushPill();
+  toast("bolt", "Fix ready in c81d4e7. Start a new review to clear the fog.");
+  const nb = $("#newReview"); nb && nb.focus();
+}
+
+/* ================= ledger ================= */
+function ledgerRows() {
+  if (S.ledgerEmpty) return [];
+  const q = S.ledgerQ.trim().toLowerCase();
+  return LEDGER.filter(r => {
+    const f = F(r.f);
+    if (q && !(PEOPLE[r.p].name.toLowerCase().includes(q) || r.sym.toLowerCase().includes(q) || f.path.toLowerCase().includes(q) || r.ex.toLowerCase().includes(q))) return false;
+    if (S.ledgerFilter === "refresh") return r.st === "refresh" || r.st === "partial";
+    if (S.ledgerFilter === "debt") return r.st === "debt";
+    if (S.ledgerFilter === "changed") return !!r.chg;
+    return true;
+  });
+}
+function viewLedger() {
+  const counts = { all: LEDGER.length, refresh: LEDGER.filter(r => r.st === "refresh" || r.st === "partial").length, debt: LEDGER.filter(r => r.st === "debt").length, changed: LEDGER.filter(r => r.chg).length };
+  if (S.ledgerEmpty) Object.keys(counts).forEach(k => counts[k] = 0);
+  const chips = [["all", "All"], ["refresh", "Needs refresh"], ["debt", "Understanding debt"], ["changed", "Changed since review"]];
+  return `<div class="view">
+    <div class="view-head"><div><span class="eyebrow">Shared record</span><h1>Understanding ledger</h1><p class="sub">Who has explained which code, when, and in their own words. A record needs a refresh when the code changes or the review is over 90 days old.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><div class="seg" role="group" aria-label="Group records"><button data-lgroup="person" aria-pressed="${S.ledgerGroup === "person"}">By person</button><button data-lgroup="symbol" aria-pressed="${S.ledgerGroup === "symbol"}">By file</button></div></div></div>
+    <div class="ledger-tools">
+      <label class="search">${ic("search")}<span class="sr">Search the ledger</span><input id="ledgerSearch" type="search" placeholder="Person, file, function or words" value="${esc(S.ledgerQ)}" autocomplete="off"><kbd aria-hidden="true">/</kbd></label>
+      <div class="chips" role="group" aria-label="Filter records">${chips.map(([k, l]) => `<button class="chip" data-lfilter="${k}" aria-pressed="${S.ledgerFilter === k}">${l} <b>${counts[k]}</b></button>`).join("")}</div>
+    </div>
+    <div class="ledger-body" id="ledgerBody">${ledgerBody()}</div></div>`;
+}
+function ledgerBody() {
+  if (!S.ledgerLoaded) return `<div class="tablewrap" aria-busy="true" style="padding:14px;display:flex;flex-direction:column;gap:10px">${'<div class="skel" style="height:38px"></div>'.repeat(7)}</div><div class="card ledger-detail"><div class="skel" style="height:20px;width:60%"></div><div class="skel" style="height:120px"></div></div>`;
+  if (S.ledgerEmpty) return `<div class="card" style="grid-column:1/-1"><div class="empty">${ic("ledger")}<h3>No understanding recorded yet</h3><p>Records appear here after someone finishes a Viva review. Each one keeps the explanation, the transcript and the code it was about.</p><a class="btn primary" href="#exam">${ic("mic")}Start a review</a></div></div>`;
+  const rows = ledgerRows();
+  if (!rows.length) return `<div class="card" style="grid-column:1/-1"><div class="empty">${ic("search")}<h3>No records match${S.ledgerQ ? ` “${esc(S.ledgerQ)}”` : " this filter"}</h3><p>Try a person's name, a function such as createCharge, or clear the filters.</p><button class="btn sm" id="ledgerClear">Clear search and filters</button></div></div>`;
+  if (!rows.find(r => r.id === S.ledgerSel)) S.ledgerSel = rows[0].id;
+  const keyOf = r => S.ledgerGroup === "person" ? r.p : r.f;
+  const groups = [...new Set(rows.map(keyOf))];
+  const body = groups.map(g => {
+    const label = S.ledgerGroup === "person" ? `<span class="pp">${av(g, 18)}${PEOPLE[g].name}</span>` : `<span class="mono">${esc(F(g).path)}</span>`;
+    return `<tr class="grp"><td colspan="6">${label}</td></tr>` + rows.filter(r => keyOf(r) === g).map(rowHTML).join("");
+  }).join("");
+  const sel = LEDGER.find(r => r.id === S.ledgerSel);
+  return `<div class="tablewrap"><table aria-label="Understanding records">
+      <thead><tr><th scope="col">Person</th><th scope="col">File / function</th><th scope="col">Status</th><th scope="col">Last reviewed</th><th scope="col">Changed since</th><th scope="col">Saved reasoning</th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <aside class="card ledger-detail" id="ledgerDetail" aria-label="Record details">${ledgerDetail(sel)}</aside>`;
+}
+function rowHTML(r) {
+  const f = F(r.f), s = STATUS[r.st];
+  return `<tr class="rec" tabindex="0" data-rec="${r.id}" aria-selected="${r.id === S.ledgerSel}">
+    <td><span class="pp">${av(r.p, 22)}${PEOPLE[r.p].short}</span></td>
+    <td><div class="sy">${esc(r.sym)}</div><div class="pa">${esc(f.path)}</div></td>
+    <td><span class="pill ${s.cls}">${ic(s.i)}${s.l}</span></td>
+    <td class="num">${fmtDate(r.d)}<div class="pa">${ago(r.d)}${r.age ? " · over 90 days" : ""}</div></td>
+    <td>${r.chg ? `<span class="chg t-amber">${ic("alert")}Yes</span><div class="pa">${r.chg.c} · ${r.chg.when}</div>` : `<span class="chg t-muted">No</span>`}</td>
+    <td><span class="ex">${esc(r.ex)}</span></td></tr>`;
+}
+function ledgerDetail(r) {
+  if (!r) return "";
+  const f = F(r.f), s = STATUS[r.st];
+  return `<div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap"><div><span class="eyebrow">${esc(f.path)}</span><h2>${esc(r.sym)}</h2></div><span class="pill ${s.cls}">${ic(s.i)}${s.l}</span></div>
+    <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg-2)">${av(r.p, 22)}${PEOPLE[r.p].name} · reviewed ${fmtDate(r.d)} (${ago(r.d)})</div>
+    ${r.why ? `<div class="callout ${r.st === "debt" ? "amber" : "slate"}">${ic(r.chg ? "alert" : r.st === "debt" ? "debt" : "clock")}<span>${esc(r.why)}</span></div>` : ""}
+    <div><h3>Explanation</h3><p class="exp">${esc(r.ex)}</p></div>
+    <div><h3>Transcript</h3><div class="transcript" style="border:0;padding:0;min-height:0">${r.tr.map(([w, t]) => `<div class="tl ${w === "Examiner" || w === "Viva" ? "" : "you"}"><span class="spk">${esc(w.split(" ")[0])}</span><span class="txt">${esc(t)}</span></div>`).join("")}</div></div>
+    <div><h3>Linked code</h3><div class="mini-code" tabindex="0" role="region" aria-label="Linked code">${r.code[1].map((l, i) => `<div><span>${r.code[0] + i}</span><span>${hl(l) || " "}</span></div>`).join("")}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${r.st === "refresh" || r.st === "debt" || r.st === "partial" ? (r.f === "webhook" && S.push !== "allowed" ? `<a class="btn primary sm" href="#exam">${ic("refresh")}Refresh understanding</a>` : `<button class="btn primary sm" data-queue="${r.f}">${ic("refresh")}Request a refresh</button>`) : ""}
+      <button class="btn sm" data-open-node="${r.f}">${ic("map")}Show on map</button></div>`;
+}
+function mountLedger() {
+  if (!S.ledgerLoaded) setTimeout(() => { S.ledgerLoaded = true; if (S.view === "ledger") { $("#ledgerBody").innerHTML = ledgerBody(); } }, 700);
+}
+function refreshLedger(focusSearch) {
+  const b = $("#ledgerBody"); if (b) b.innerHTML = ledgerBody();
+  if (focusSearch) return;
+}
+
+/* ================= events ================= */
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("button, a, tr.rec, .ln.grp"); if (!t) { if (S.demoOpen && !ev.target.closest("#demoMenu")) setDemo(false); return; }
+  const e = E();
+  if (t.id === "demoBtn") { setDemo(!S.demoOpen); return; }
+  if (S.demoOpen && !t.closest("#demoMenu")) setDemo(false);
+  if (t.dataset.demo) { demoAction(t.dataset.demo); return; }
+  if (t.id === "connRetry" || t.dataset.retryConn !== undefined) { retryConn(); return; }
+  // map
+  if (t.dataset.mode) { S.mapMode = t.dataset.mode; refreshMap(); return; }
+  if (t.classList.contains("node")) { S.sel = S.sel === t.dataset.id ? null : t.dataset.id; refreshMap(t.dataset.id); return; }
+  if (t.id === "closeDetail") { const id = S.sel; S.sel = null; refreshMap(id); return; }
+  if (t.id === "clearSearch") { S.mapQuery = ""; refreshMap(); $("#mapSearch").focus(); return; }
+  if (t.dataset.openNode) { S.sel = t.dataset.openNode; S.mapQuery = ""; if (location.hash === "#map") render(false); else location.hash = "map"; return; }
+  if (t.dataset.queue) { toast("check", `Added ${F(t.dataset.queue).path} to the team's review queue.`); return; }
+  if (t.dataset.ledgerFile) { const r = LEDGER.find(x => x.f === t.dataset.ledgerFile); if (r) S.ledgerSel = r.id; return; }
+  // ledger
+  if (t.dataset.lfilter) { S.ledgerFilter = t.dataset.lfilter; $$(".chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.lfilter === S.ledgerFilter))); refreshLedger(); return; }
+  if (t.dataset.lgroup) { S.ledgerGroup = t.dataset.lgroup; $$("[data-lgroup]").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.lgroup === S.ledgerGroup))); refreshLedger(); return; }
+  if (t.matches("tr.rec")) { selectRec(t.dataset.rec); return; }
+  if (t.id === "ledgerClear") { S.ledgerQ = ""; S.ledgerFilter = "all"; render(false); return; }
+  // exam: code
+  if (t.dataset.mtab) { e.tab = t.dataset.mtab; $(".split").dataset.tab = e.tab; $$("[data-mtab]").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.mtab === e.tab)); b.setAttribute("aria-selected", String(b.dataset.mtab === e.tab)); }); if (e.tab === "code") applyFocus(true); return; }
+  if (t.dataset.file) { e.file = t.dataset.file; rerenderCode(); return; }
+  if (t.dataset.fileJump) { e.file = t.dataset.fileJump; rerenderCode(); applyFocus(true); return; }
+  if (t.dataset.group) { selectGroup(t.dataset.group); return; }
+  if (t.matches(".ln.grp")) { selectGroup(t.dataset.g); return; }
+  if (t.id === "evClose") { selectGroup(e.group); return; }
+  if (t.id === "jumpFocus") { applyFocus(true); return; }
+  if (t.dataset.lines) { const [a, b] = t.dataset.lines.split("-").map(Number); setFocus([a, b]); if (matchMedia("(max-width:980px)").matches) { e.tab = "code"; $(".split").dataset.tab = "code"; applyFocus(true); } return; }
+  // exam: flow
+  if (t.id === "startVoice") { if (S.mic === "prompt") { e.phase = "perm"; e.pendingStart = true; renderQ(); $("#permAllow").focus(); } else beginExam("voice"); return; }
+  if (t.id === "startTyped") { beginExam("typed").then(() => { const a = $("#answer"); a && a.focus(); }); e.mode = "typed"; return; }
+  if (t.id === "permAllow") { S.mic = "granted"; toast("mic", "Microphone allowed (simulated)."); if (e.pendingStart || !e.started) { e.pendingStart = false; beginExam("voice"); } else { e.phase = "ready"; e.mode = "voice"; renderQ(); startListening(); } return; }
+  if (t.id === "permDeny") { e.pendingStart = false; if (!e.started) beginExam("typed").then(() => { const a = $("#answer"); a && a.focus(); }); else { e.phase = "ready"; e.mode = "typed"; renderQ(); $("#answer").focus(); } return; }
+  if (t.id === "micBtn") { if (e.phase === "listening") stopListening(); else startListening(); return; }
+  if (t.id === "muteBtn") { e.muted = !e.muted; if (e.muted) hush(); t.setAttribute("aria-pressed", String(e.muted)); t.innerHTML = ic(e.muted ? "volOff" : "vol"); t.setAttribute("aria-label", e.muted ? "Unmute examiner voice" : "Mute examiner voice"); toast(e.muted ? "volOff" : "vol", e.muted ? "Examiner voice muted. Captions continue." : "Examiner voice on."); return; }
+  if (t.id === "typeBtn") { if (e.phase === "listening") { micState = null; e.phase = "ready"; } e.mode = "typed"; renderQ(); $("#answer").focus(); return; }
+  if (t.id === "voiceBtn") { e.mode = "voice"; renderQ(); $("#micBtn") && $("#micBtn").focus(); return; }
+  if (t.id === "sendBtn") { submitAnswer($("#answer").value, "typed"); return; }
+  if (t.id === "sampleBtn") { const q = currentQ(); const a = $("#answer"); a.value = e.follow ? (q.sampleFollow || q.typedSample || q.sample) : (q.typedSample || q.sample); e.draft = a.value; a.focus(); return; }
+  if (t.id === "skipBtn") { e.skipConfirm = true; const s = $(".skip"); s.outerHTML = skipHTML(); $("#skipYes").focus(); return; }
+  if (t.id === "skipCancel") { e.skipConfirm = false; $(".skip").outerHTML = skipHTML(); $("#skipBtn").focus(); return; }
+  if (t.id === "skipYes" || t.id === "skipFromResult") { FLOW++; micState = null; applyResult("skipped"); return; }
+  // results
+  if (t.id === "sendAgent") { sendToAgent(); return; }
+  if (t.id === "newReview") { S.exam = freshExam(2); S.agent = null; render(false); const b = $("#startVoice:not([disabled])") || $("#startTyped"); b && b.focus(); return; }
+  if (t.id === "reviewCode") { e.resultView = "code"; e.focus = [38, 44]; e.tab = "code"; render(false); return; }
+  if (t.id === "backToResult") { e.resultView = "summary"; render(false); return; }
+  if (t.id === "toMap") { S.sel = "webhook"; S.mapMode = "me"; location.hash = "map"; setTimeout(() => toast("check", "Fog clearing on src/webhook.ts and 2 related files."), 300); return; }
+  if (t.id === "reviewLater") { S.sel = "webhook"; location.hash = "map"; toast("clock", "Kept in your review queue. The fog stays until it's reviewed."); return; }
+  if (t.id === "reviewNow") { const r = S.fixed ? 2 : 1; S.exam = freshExam(r); render(false); return; }
+});
+function selectRec(id) {
+  S.ledgerSel = id;
+  $$("tr.rec").forEach(r => r.setAttribute("aria-selected", String(r.dataset.rec === id)));
+  const d = $("#ledgerDetail"); if (d) d.innerHTML = ledgerDetail(LEDGER.find(r => r.id === id));
+  if (matchMedia("(max-width:1180px)").matches && d) d.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+document.addEventListener("input", ev => {
+  if (ev.target.id === "mapSearch") { S.mapQuery = ev.target.value; refreshMap(); }
+  if (ev.target.id === "ledgerSearch") { S.ledgerQ = ev.target.value; refreshLedger(); }
+  if (ev.target.id === "answer") E().draft = ev.target.value;
+});
+document.addEventListener("change", ev => { if (ev.target.id === "fogToggle") { S.fogOn = ev.target.checked; fogDirty = true; drawFog(); } });
+document.addEventListener("keydown", ev => {
+  const tag = (ev.target.tagName || "").toLowerCase(); const typing = tag === "input" || tag === "textarea";
+  if (ev.key === "Escape") {
+    if (S.demoOpen) { setDemo(false); $("#demoBtn").focus(); return; }
+    if (S.view === "map" && S.sel) { const id = S.sel; S.sel = null; refreshMap(id); return; }
+    if (S.view === "exam" && E().skipConfirm) { E().skipConfirm = false; $(".skip").outerHTML = skipHTML(); return; }
+    if (S.view === "exam" && E().group) { selectGroup(E().group); return; }
+  }
+  if (ev.key === "/" && !typing) { const s = $("#mapSearch") || $("#ledgerSearch"); if (s) { ev.preventDefault(); s.focus(); } }
+  if (ev.target.id === "answer" && ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); const b = $("#sendBtn"); if (b && !b.disabled) submitAnswer(ev.target.value, "typed"); }
+  if (ev.target.matches && ev.target.matches("tr.rec") && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); selectRec(ev.target.dataset.rec); }
+  if (ev.target.matches && ev.target.matches("tr.rec") && (ev.key === "ArrowDown" || ev.key === "ArrowUp")) {
+    ev.preventDefault(); const rows = $$("tr.rec"); const i = rows.indexOf(ev.target); const n = rows[i + (ev.key === "ArrowDown" ? 1 : -1)]; if (n) { n.focus(); selectRec(n.dataset.rec); }
+  }
+  if (ev.target.classList && ev.target.classList.contains("ftab") && (ev.key === "ArrowRight" || ev.key === "ArrowLeft")) {
+    const tabs = $$(".ftab"); const i = tabs.indexOf(ev.target); const n = tabs[(i + (ev.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length]; n.focus(); n.click();
+  }
+  if (S.demoOpen && (ev.key === "ArrowDown" || ev.key === "ArrowUp")) {
+    const items = $$("#demoMenu button"); const i = items.indexOf(document.activeElement); ev.preventDefault();
+    items[(i + (ev.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
+
+/* ----- demo menu ----- */
+function demoAction(a) {
+  setDemo(false);
+  if (a === "conn") { if (S.conn === "ok") { S.conn = "down"; if (E().phase === "listening") { micState = null; FLOW++; E().phase = "ready"; } toast("wifiOff", "Simulated: local service unreachable."); } else S.conn = "ok"; renderConn(); refreshExamBits(); }
+  if (a === "mic") { S.mic = S.mic === "denied" ? "prompt" : "denied"; if (S.mic === "denied" && E().started && E().phase !== "result") { if (E().phase === "listening") { micState = null; E().phase = "ready"; } E().mode = "typed"; } refreshExamBits(); toast(S.mic === "denied" ? "micOff" : "mic", S.mic === "denied" ? "Simulated: microphone blocked by the browser." : "Microphone unblocked. Viva will ask again."); }
+  if (a === "mic-reset") { S.mic = "prompt"; refreshExamBits(); toast("mic", "Viva will ask for the microphone next time."); }
+  if (a === "loading") { S.mapLoaded = false; S.ledgerLoaded = false; render(false); }
+  if (a === "empty") { S.ledgerEmpty = !S.ledgerEmpty; if (S.view === "ledger") render(false); else location.hash = "ledger"; }
+  if (a === "reset") { location.reload(); }
+}
+
+/* ================= boot ================= */
+window.addEventListener("hashchange", route);
+window.addEventListener("resize", () => { if (S.view === "map") measureFog(); });
+route();
+document.fonts && document.fonts.ready.then(() => { if (S.view === "map") measureFog(); });
+})();
+</script>
